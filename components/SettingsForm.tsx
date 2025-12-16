@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Profile } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Camera } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface SettingsFormProps {
@@ -21,8 +23,11 @@ interface SettingsFormProps {
 export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) {
   const router = useRouter()
   const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '')
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     email_notifications: profile?.email_notifications ?? true,
@@ -36,6 +41,60 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
     new: '',
     confirm: '',
   })
+
+  const initials = formData.full_name
+    ? formData.full_name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : userEmail[0].toUpperCase()
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be less than 2MB')
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('File must be an image')
+      return
+    }
+
+    setUploading(true)
+
+    const filePath = `avatars/${userId}/${Date.now()}-${file.name}`
+    const { error: uploadError } = await supabase.storage
+      .from('attachments')
+      .upload(filePath, file)
+
+    if (uploadError) {
+      toast.error('Failed to upload image')
+      setUploading(false)
+      return
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('attachments')
+      .getPublicUrl(filePath)
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: urlData.publicUrl })
+      .eq('id', userId)
+
+    if (updateError) {
+      toast.error('Failed to update profile')
+    } else {
+      setAvatarUrl(urlData.publicUrl)
+      toast.success('Profile photo updated')
+      router.refresh()
+    }
+    setUploading(false)
+  }
 
   async function handleProfileUpdate(e: React.FormEvent) {
     e.preventDefault()
@@ -94,10 +153,46 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
       <Card>
         <CardHeader>
           <CardTitle>Profile</CardTitle>
-          <CardDescription>Update your personal information</CardDescription>
+          <CardDescription>Update your personal information and photo</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleProfileUpdate} className="space-y-4">
+          <form onSubmit={handleProfileUpdate} className="space-y-6">
+            {/* Avatar Section */}
+            <div className="flex items-center gap-6">
+              <div className="relative">
+                <Avatar className="h-24 w-24 border-4 border-[#00467F]/10">
+                  <AvatarImage src={avatarUrl} alt={formData.full_name} />
+                  <AvatarFallback className="text-2xl bg-[#00467F] text-white font-bold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-[#54B948] rounded-full flex items-center justify-center text-white hover:bg-[#54B948]/90 transition-colors shadow-lg"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </div>
+              <div>
+                <p className="font-medium text-[#3C3675]">{formData.full_name || 'Your Name'}</p>
+                <p className="text-sm text-slate-500">{userEmail}</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {uploading ? 'Uploading...' : 'Click the camera icon to change your photo'}
+                </p>
+              </div>
+            </div>
+
+            <Separator />
+
             <div className="space-y-2">
               <Label htmlFor="full_name">Full Name</Label>
               <Input

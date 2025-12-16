@@ -24,9 +24,9 @@ interface TaskCardProps {
 }
 
 const priorityConfig = {
-  urgent: { label: 'Urgent', className: 'bg-red-100 text-red-700 hover:bg-red-100' },
-  next_week: { label: 'Next Week', className: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100' },
-  rainy_day: { label: 'Rainy Day', className: 'bg-[#00467F]/10 text-[#00467F] hover:bg-[#00467F]/10' },
+  urgent: { label: 'Urgent', className: 'bg-red-100 text-red-700 hover:bg-red-100', border: 'border-l-red-500' },
+  next_week: { label: 'Next Week', className: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100', border: 'border-l-yellow-500' },
+  rainy_day: { label: 'Rainy Day', className: 'bg-[#00467F]/10 text-[#00467F] hover:bg-[#00467F]/10', border: 'border-l-[#1669C9]' },
 }
 
 const statusConfig = {
@@ -75,7 +75,7 @@ export function TaskCard({ task, profiles, onUpdate }: TaskCardProps) {
     : null
 
   return (
-    <Card className="group hover:shadow-md transition-shadow">
+    <Card className={`group hover:shadow-lg transition-all border-l-4 ${priorityConfig[task.priority].border}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">

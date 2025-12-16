@@ -14,6 +14,7 @@ export interface Profile {
   id: string
   full_name: string | null
   email: string
+  avatar_url: string | null
   email_notifications: boolean
   notify_on_assignment: boolean
   notify_on_comments: boolean
