@@ -97,7 +97,7 @@ export function CommentSection({ taskId, comments, currentUserId }: CommentSecti
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
+                      <AvatarFallback className="text-xs bg-[#00467F]/10 text-[#00467F]">
                         {initials}
                       </AvatarFallback>
                     </Avatar>

@@ -26,13 +26,13 @@ interface TaskCardProps {
 const priorityConfig = {
   urgent: { label: 'Urgent', className: 'bg-red-100 text-red-700 hover:bg-red-100' },
   next_week: { label: 'Next Week', className: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100' },
-  rainy_day: { label: 'Rainy Day', className: 'bg-blue-100 text-blue-700 hover:bg-blue-100' },
+  rainy_day: { label: 'Rainy Day', className: 'bg-[#00467F]/10 text-[#00467F] hover:bg-[#00467F]/10' },
 }
 
 const statusConfig = {
   not_started: { label: 'Not Started', className: 'bg-slate-100 text-slate-700' },
-  in_progress: { label: 'In Progress', className: 'bg-blue-100 text-blue-700' },
-  completed: { label: 'Completed', className: 'bg-green-100 text-green-700' },
+  in_progress: { label: 'In Progress', className: 'bg-[#1669C9]/10 text-[#1669C9]' },
+  completed: { label: 'Completed', className: 'bg-[#54B948]/10 text-[#54B948]' },
 }
 
 export function TaskCard({ task, profiles, onUpdate }: TaskCardProps) {
@@ -80,7 +80,7 @@ export function TaskCard({ task, profiles, onUpdate }: TaskCardProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <Link href={`/dashboard/tasks/${task.id}`}>
-              <h3 className="font-medium text-slate-900 hover:text-blue-600 transition-colors truncate">
+              <h3 className="font-medium text-slate-900 hover:text-[#1669C9] transition-colors truncate">
                 {task.title}
               </h3>
             </Link>
@@ -136,7 +136,7 @@ export function TaskCard({ task, profiles, onUpdate }: TaskCardProps) {
                 {task.assignee ? (
                   <>
                     <Avatar className="h-5 w-5">
-                      <AvatarFallback className="text-[10px] bg-blue-100 text-blue-600">
+                      <AvatarFallback className="text-[10px] bg-[#00467F]/10 text-[#00467F]">
                         {assigneeInitials}
                       </AvatarFallback>
                     </Avatar>
@@ -160,13 +160,13 @@ export function TaskCard({ task, profiles, onUpdate }: TaskCardProps) {
           <div className="flex items-center gap-3 text-slate-400">
             <Link
               href={`/dashboard/tasks/${task.id}#comments`}
-              className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-1 hover:text-[#1669C9] transition-colors"
             >
               <MessageSquare className="h-4 w-4" />
             </Link>
             <Link
               href={`/dashboard/tasks/${task.id}#attachments`}
-              className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-1 hover:text-[#1669C9] transition-colors"
             >
               <Paperclip className="h-4 w-4" />
             </Link>

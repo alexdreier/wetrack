@@ -44,7 +44,7 @@ export function Navbar({ user, profile }: NavbarProps) {
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#00467F] rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">W</span>
             </div>
             <span className="font-semibold text-lg text-slate-900">WETrack</span>
@@ -62,7 +62,7 @@ export function Navbar({ user, profile }: NavbarProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                   <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-blue-100 text-blue-600">
+                    <AvatarFallback className="bg-[#00467F]/10 text-[#00467F]">
                       {initials}
                     </AvatarFallback>
                   </Avatar>

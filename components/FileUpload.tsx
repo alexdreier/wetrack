@@ -181,7 +181,7 @@ export function FileUpload({ taskId, attachments, currentUserId }: FileUploadPro
                         <span>•</span>
                         <div className="flex items-center gap-1">
                           <Avatar className="h-4 w-4">
-                            <AvatarFallback className="text-[8px] bg-blue-100 text-blue-600">
+                            <AvatarFallback className="text-[8px] bg-[#00467F]/10 text-[#00467F]">
                               {initials}
                             </AvatarFallback>
                           </Avatar>

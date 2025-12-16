@@ -22,7 +22,7 @@ const actionConfig: Record<
   { icon: typeof Plus; label: string; color: string }
 > = {
   created: { icon: Plus, label: 'created this task', color: 'text-green-600' },
-  updated: { icon: Edit, label: 'updated the task', color: 'text-blue-600' },
+  updated: { icon: Edit, label: 'updated the task', color: 'text-[#1669C9]' },
   commented: { icon: MessageSquare, label: 'commented', color: 'text-purple-600' },
   attached: { icon: Paperclip, label: 'added an attachment', color: 'text-orange-600' },
   status_changed: { icon: CheckCircle, label: 'changed status', color: 'text-teal-600' },

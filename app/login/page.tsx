@@ -58,7 +58,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-[#00467F] rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-xl">W</span>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setIsResetMode(!isResetMode)}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-[#1669C9] hover:underline"
             >
               {isResetMode ? 'Back to sign in' : 'Forgot your password?'}
             </button>
