@@ -21,6 +21,7 @@ import Link from 'next/link'
 
 interface CalendarViewProps {
   tasks: TaskWithAssignee[]
+  compact?: boolean
 }
 
 const priorityColors = {
@@ -29,7 +30,7 @@ const priorityColors = {
   rainy_day: 'bg-blue-500',
 }
 
-export function CalendarView({ tasks }: CalendarViewProps) {
+export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const monthStart = startOfMonth(currentMonth)
@@ -49,33 +50,35 @@ export function CalendarView({ tasks }: CalendarViewProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#00467F] to-[#1669C9] px-6 py-4">
+      <div className={`bg-gradient-to-r from-[#00467F] to-[#1669C9] ${compact ? 'px-4 py-3' : 'px-6 py-4'}`}>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">
-            {format(currentMonth, 'MMMM yyyy')}
+          <h2 className={`font-semibold text-white ${compact ? 'text-base' : 'text-lg'}`}>
+            {format(currentMonth, compact ? 'MMM yyyy' : 'MMMM yyyy')}
           </h2>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className="h-8 w-8 text-white hover:bg-white/20"
+              className={`text-white hover:bg-white/20 ${compact ? 'h-7 w-7' : 'h-8 w-8'}`}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentMonth(new Date())}
-              className="text-white hover:bg-white/20 text-xs"
-            >
-              Today
-            </Button>
+            {!compact && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentMonth(new Date())}
+                className="text-white hover:bg-white/20 text-xs"
+              >
+                Today
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className="h-8 w-8 text-white hover:bg-white/20"
+              className={`text-white hover:bg-white/20 ${compact ? 'h-7 w-7' : 'h-8 w-8'}`}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -85,10 +88,10 @@ export function CalendarView({ tasks }: CalendarViewProps) {
 
       {/* Days of week header */}
       <div className="grid grid-cols-7 border-b bg-slate-50">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+        {(compact ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']).map((day, i) => (
           <div
-            key={day}
-            className="py-2 text-center text-xs font-medium text-slate-500"
+            key={i}
+            className={`text-center text-xs font-medium text-slate-500 ${compact ? 'py-1.5' : 'py-2'}`}
           >
             {day}
           </div>
@@ -101,6 +104,39 @@ export function CalendarView({ tasks }: CalendarViewProps) {
           const dayTasks = getTasksForDay(day)
           const isCurrentMonth = isSameMonth(day, currentMonth)
           const isCurrentDay = isToday(day)
+          const hasUrgent = dayTasks.some((t) => t.priority === 'urgent')
+          const hasNextWeek = dayTasks.some((t) => t.priority === 'next_week')
+          const hasRainyDay = dayTasks.some((t) => t.priority === 'rainy_day')
+
+          if (compact) {
+            return (
+              <div
+                key={idx}
+                className={`h-10 border-b border-r flex flex-col items-center justify-center relative ${
+                  !isCurrentMonth ? 'bg-slate-50' : 'bg-white'
+                } ${idx % 7 === 6 ? 'border-r-0' : ''}`}
+              >
+                <span
+                  className={`text-xs flex items-center justify-center w-6 h-6 rounded-full ${
+                    isCurrentDay
+                      ? 'bg-[#00467F] text-white font-bold'
+                      : !isCurrentMonth
+                      ? 'text-slate-300'
+                      : 'text-slate-700'
+                  }`}
+                >
+                  {format(day, 'd')}
+                </span>
+                {dayTasks.length > 0 && (
+                  <div className="flex gap-0.5 mt-0.5">
+                    {hasUrgent && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
+                    {hasNextWeek && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />}
+                    {hasRainyDay && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                  </div>
+                )}
+              </div>
+            )
+          }
 
           return (
             <div
@@ -145,22 +181,24 @@ export function CalendarView({ tasks }: CalendarViewProps) {
         })}
       </div>
 
-      {/* Legend */}
-      <div className="px-4 py-3 border-t bg-slate-50 flex items-center gap-4 text-xs">
-        <span className="text-slate-500">Priority:</span>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-red-500" />
-          <span className="text-slate-600">Urgent</span>
+      {/* Legend - only show in non-compact mode */}
+      {!compact && (
+        <div className="px-4 py-3 border-t bg-slate-50 flex items-center gap-4 text-xs">
+          <span className="text-slate-500">Priority:</span>
+          <div className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span className="text-slate-600">Urgent</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-yellow-500" />
+            <span className="text-slate-600">Next Week</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
+            <span className="text-slate-600">Rainy Day</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-yellow-500" />
-          <span className="text-slate-600">Next Week</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-blue-500" />
-          <span className="text-slate-600">Rainy Day</span>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
