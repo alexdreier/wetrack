@@ -17,6 +17,7 @@ import {
 } from 'date-fns'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import Link from 'next/link'
+import { parseLocalDate } from '@/lib/utils'
 
 interface CalendarViewProps {
   tasks: TaskWithAssignee[]
@@ -48,7 +49,7 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
   const getTasksForDay = (day: Date) => {
     return tasks.filter((task) => {
       if (!task.due_date) return false
-      return isSameDay(new Date(task.due_date), day)
+      return isSameDay(parseLocalDate(task.due_date), day)
     })
   }
 

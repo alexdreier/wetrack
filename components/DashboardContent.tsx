@@ -8,6 +8,7 @@ import { CreateTaskButton } from '@/components/CreateTaskButton'
 import { CalendarView } from '@/components/CalendarView'
 import { Button } from '@/components/ui/button'
 import { ListTodo, CheckCircle, Clock, AlertTriangle, Calendar, List, CircleDot, Circle, CloudRain } from 'lucide-react'
+import { parseLocalDate } from '@/lib/utils'
 
 interface DashboardContentProps {
   tasks: TaskWithAssignee[]
@@ -193,7 +194,7 @@ export function DashboardContent({ tasks, profiles, currentUserId, firstName }: 
                         </span>
                         {task.due_date && (
                           <span className="text-xs text-slate-500">
-                            Due {new Date(task.due_date).toLocaleDateString()}
+                            Due {parseLocalDate(task.due_date).toLocaleDateString()}
                           </span>
                         )}
                       </div>

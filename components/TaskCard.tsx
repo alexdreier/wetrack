@@ -16,6 +16,7 @@ import {
 import { Calendar, Clock, MessageSquare, Paperclip, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { RichTextDisplay } from './RichTextEditor'
+import { parseLocalDate } from '@/lib/utils'
 
 interface TaskCardProps {
   task: TaskWithAssignee
@@ -152,7 +153,7 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
           {task.due_date && (
             <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-full">
               <Calendar className="h-3.5 w-3.5 text-slate-400" />
-              <span className="font-medium">{format(new Date(task.due_date), 'MMM d')}</span>
+              <span className="font-medium">{format(parseLocalDate(task.due_date), 'MMM d')}</span>
             </span>
           )}
           {task.time_estimate && (

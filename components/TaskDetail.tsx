@@ -53,6 +53,7 @@ import { CommentSection } from './CommentSection'
 import { FileUpload } from './FileUpload'
 import { ActivityFeed } from './ActivityFeed'
 import { RichTextEditor, RichTextDisplay } from './RichTextEditor'
+import { parseLocalDate } from '@/lib/utils'
 
 interface TaskDetailProps {
   task: TaskWithAssignee
@@ -482,7 +483,7 @@ export function TaskDetail({
                         <Label className="text-slate-500">Start Date</Label>
                         <p className="mt-1 flex items-center gap-2 text-slate-700">
                           <Calendar className="h-4 w-4" />
-                          {format(new Date(task.start_date), 'MMM d, yyyy')}
+                          {format(parseLocalDate(task.start_date), 'MMM d, yyyy')}
                         </p>
                       </div>
                     )}
@@ -491,7 +492,7 @@ export function TaskDetail({
                         <Label className="text-slate-500">Due Date</Label>
                         <p className="mt-1 flex items-center gap-2 text-slate-700">
                           <Calendar className="h-4 w-4" />
-                          {format(new Date(task.due_date), 'MMM d, yyyy')}
+                          {format(parseLocalDate(task.due_date), 'MMM d, yyyy')}
                         </p>
                       </div>
                     )}
