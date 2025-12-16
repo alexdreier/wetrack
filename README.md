@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WETrack
 
-## Getting Started
+A collaborative task management web app for teams with real-time sync, comments, file attachments, and email notifications.
 
-First, run the development server:
+## Features
+
+- **Task Management**: Create, edit, and organize tasks with priorities, statuses, and due dates
+- **Real-time Sync**: See changes instantly when your teammate updates a task
+- **Comments**: Discuss tasks with threaded comments
+- **File Attachments**: Upload and share files on tasks
+- **Email Notifications**: Get notified about assignments, comments, and status changes
+- **Two-user System**: Perfect for small teams or manager-employee pairs
+
+## Tech Stack
+
+- **Next.js 14** - React framework with App Router
+- **Supabase** - Database, auth, real-time, and file storage
+- **Tailwind CSS + shadcn/ui** - Modern, accessible UI components
+- **TypeScript** - Type-safe development
+
+## Setup
+
+### 1. Create a Supabase Project
+
+1. Go to [supabase.com](https://supabase.com) and create a new project
+2. Wait for the project to be ready
+
+### 2. Set Up the Database
+
+1. In your Supabase dashboard, go to **SQL Editor**
+2. Copy the contents of `supabase/schema.sql` and run it
+3. Copy the contents of `supabase/storage.sql` and run it
+
+### 3. Configure Environment Variables
+
+1. Copy `.env.local.example` to `.env.local`:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+2. Fill in the values from your Supabase project:
+   - `NEXT_PUBLIC_SUPABASE_URL`: Found in Settings > API
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Found in Settings > API (anon public key)
+   - `SUPABASE_SERVICE_ROLE_KEY`: Found in Settings > API (service_role key - keep secret!)
+
+3. For email notifications (optional), configure SMTP:
+   - `SMTP_HOST`: e.g., `smtp.gmail.com`
+   - `SMTP_PORT`: e.g., `587`
+   - `SMTP_USER`: Your email address
+   - `SMTP_PASS`: App password (for Gmail, create one at Google Account > Security > App Passwords)
+
+### 4. Create User Accounts
+
+1. In Supabase dashboard, go to **Authentication > Users**
+2. Click **Add User** and create accounts for you and your manager
+3. Both users should receive email invitations to set their passwords
+
+### 5. Run the Development Server
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Deploy to Vercel
 
-## Learn More
+1. Push your code to GitHub
+2. Go to [vercel.com](https://vercel.com) and import your repository
+3. Add all environment variables from `.env.local`
+4. Deploy!
 
-To learn more about Next.js, take a look at the following resources:
+### Update Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+After deployment, update `NEXT_PUBLIC_APP_URL` to your production URL for email links to work correctly.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+wetrack/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   ├── dashboard/         # Main dashboard and task views
+│   ├── login/             # Authentication pages
+│   └── layout.tsx         # Root layout
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   └── ...               # App-specific components
+├── lib/                   # Utilities and configurations
+│   ├── supabase/         # Supabase client setup
+│   └── email.ts          # Email notification helpers
+├── supabase/             # Database schema files
+│   ├── schema.sql        # Main database schema
+│   └── storage.sql       # Storage bucket setup
+└── types/                # TypeScript type definitions
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
