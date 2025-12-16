@@ -4,6 +4,7 @@ import { Profile, TaskWithAssignee } from '@/types/database'
 import {
   sendEmail,
   taskAssignedEmail,
+  taskCreatedEmail,
   newCommentEmail,
   statusChangedEmail,
 } from '@/lib/email'
@@ -44,6 +45,28 @@ export async function POST(request: NextRequest) {
     const taskUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/tasks/${taskId}`
 
     switch (type) {
+      case 'task_created': {
+        // Notify all other users about the new task
+        const { data: allProfiles } = await supabase
+          .from('profiles')
+          .select('*')
+          .neq('id', userId)
+
+        if (allProfiles) {
+          for (const profile of allProfiles) {
+            // Use notify_on_assignment as a proxy for "notify on new tasks"
+            if (profile.notify_on_assignment) {
+              const email = taskCreatedEmail(task.title, actorName, data?.priority || task.priority, taskUrl)
+              await sendEmail({
+                to: profile.email,
+                ...email,
+              })
+            }
+          }
+        }
+        break
+      }
+
       case 'task_assigned': {
         // Notify the assignee (if not the same person who assigned)
         if (task.assignee && task.assignee.id !== userId && task.assignee.notify_on_assignment) {

@@ -88,7 +88,19 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
         details: { title: formData.title },
       })
 
-      // Send notification if task is assigned to someone else
+      // Notify other users about the new task
+      fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'task_created',
+          taskId: newTask.id,
+          userId: currentUserId,
+          data: { priority: formData.priority },
+        }),
+      })
+
+      // Also send assignment notification if assigned to someone else
       if (formData.assigned_to && formData.assigned_to !== 'unassigned' && formData.assigned_to !== currentUserId) {
         fetch('/api/notifications', {
           method: 'POST',

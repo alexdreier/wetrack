@@ -159,6 +159,45 @@ export function newCommentEmail(taskTitle: string, commenter: string, comment: s
   }
 }
 
+export function taskCreatedEmail(taskTitle: string, createdBy: string, priority: string, taskUrl: string) {
+  const priorityConfig: Record<string, { label: string; color: string; bg: string }> = {
+    urgent: { label: 'Urgent', color: '#dc2626', bg: '#fef2f2' },
+    normal: { label: 'Normal', color: '#d97706', bg: '#fffbeb' },
+    rainy_day: { label: 'Rainy Day', color: '#64748b', bg: '#f8fafc' },
+  }
+
+  const p = priorityConfig[priority] || priorityConfig.normal
+
+  const content = `
+    <h1 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 24px; font-weight: 700;">
+      New Task Created
+    </h1>
+    <p style="margin: 0 0 24px 0; color: #6b7280; font-size: 15px;">
+      ${createdBy} created a new task
+    </p>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+      <tr>
+        <td style="background-color: #f8fafc; border-left: 4px solid #00467F; padding: 20px; border-radius: 0 8px 8px 0;">
+          <p style="margin: 0 0 12px 0; color: #1a1a1a; font-size: 17px; font-weight: 600;">
+            ${taskTitle}
+          </p>
+          <span style="display: inline-block; background-color: ${p.bg}; color: ${p.color}; padding: 6px 12px; border-radius: 50px; font-weight: 600; font-size: 12px;">
+            ${p.label}
+          </span>
+        </td>
+      </tr>
+    </table>
+
+    ${actionButton('View Task', taskUrl)}
+  `
+
+  return {
+    subject: `[WE Tracker] New task: ${taskTitle}`,
+    html: emailWrapper(content),
+  }
+}
+
 export function statusChangedEmail(taskTitle: string, changedBy: string, newStatus: string, taskUrl: string) {
   const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
     not_started: { label: 'Not Started', color: '#6b7280', bg: '#f3f4f6' },
