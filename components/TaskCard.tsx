@@ -173,26 +173,20 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
               onValueChange={updateAssignee}
             >
               <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors rounded-lg">
-                <div className="flex items-center gap-2">
-                  {task.assignee ? (
-                    <>
-                      <Avatar className="h-5 w-5 ring-2 ring-white shadow-sm">
-                        <AvatarFallback className="text-[10px] bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white font-medium">
-                          {assigneeInitials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium text-slate-700">{task.assignee.full_name}</span>
-                    </>
-                  ) : (
-                    <span className="text-slate-400 italic">Unassigned</span>
-                  )}
-                </div>
+                <SelectValue placeholder="Unassigned" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="unassigned">Unassigned</SelectItem>
                 {profiles.map((profile) => (
                   <SelectItem key={profile.id} value={profile.id}>
-                    {profile.full_name || profile.email}
+                    <span className="flex items-center gap-2">
+                      <Avatar className="h-5 w-5">
+                        <AvatarFallback className="text-[10px] bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white font-medium">
+                          {profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      {profile.full_name || profile.email}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
