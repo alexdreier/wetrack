@@ -15,9 +15,14 @@ import {
   endOfWeek,
   isToday
 } from 'date-fns'
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { parseLocalDate } from '@/lib/utils'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 
 interface CalendarViewProps {
   tasks: TaskWithAssignee[]
@@ -116,12 +121,11 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
           const hasRainyDay = dayTasks.some((t) => t.priority === 'rainy_day')
 
           if (compact) {
-            return (
+            const cellContent = (
               <div
-                key={idx}
                 className={`h-12 border-b border-r border-slate-100/80 flex flex-col items-center justify-center relative transition-all duration-200 ${
                   !isCurrentMonth ? 'bg-slate-50/30' : 'bg-white hover:bg-blue-50/30'
-                } ${idx % 7 === 6 ? 'border-r-0' : ''}`}
+                } ${idx % 7 === 6 ? 'border-r-0' : ''} ${dayTasks.length > 0 ? 'cursor-pointer' : ''}`}
               >
                 <span
                   className={`text-xs flex items-center justify-center w-7 h-7 rounded-full font-medium transition-all duration-200 ${
@@ -143,6 +147,62 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
                 )}
               </div>
             )
+
+            if (dayTasks.length > 0) {
+              return (
+                <Popover key={idx}>
+                  <PopoverTrigger asChild>
+                    {cellContent}
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 p-0" align="center">
+                    <div className="bg-gradient-to-r from-[#00467F] to-[#1669C9] px-4 py-3 rounded-t-md">
+                      <h3 className="font-semibold text-white text-sm">
+                        {format(day, 'EEEE, MMMM d')}
+                      </h3>
+                      <p className="text-white/70 text-xs mt-0.5">
+                        {dayTasks.length} task{dayTasks.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="p-2 max-h-64 overflow-y-auto">
+                      {dayTasks.map((task) => (
+                        <Link
+                          key={task.id}
+                          href={`/dashboard/tasks/${task.id}`}
+                          className="block p-2.5 rounded-lg hover:bg-slate-50 transition-colors group"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priorityDots[task.priority]}`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-800 truncate group-hover:text-[#1669C9] transition-colors">
+                                {task.title}
+                              </p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                  task.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
+                                  task.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {task.status === 'not_started' ? 'Not Started' :
+                                   task.status === 'in_progress' ? 'In Progress' : 'Completed'}
+                                </span>
+                                {task.time_estimate && (
+                                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {task.time_estimate}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )
+            }
+
+            return <div key={idx}>{cellContent}</div>
           }
 
           return (
@@ -178,9 +238,57 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
                   </Link>
                 ))}
                 {dayTasks.length > 3 && (
-                  <span className="block text-[10px] text-slate-400 font-semibold px-2 py-1 hover:text-slate-600 cursor-pointer transition-colors">
-                    +{dayTasks.length - 3} more
-                  </span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <span className="block text-[10px] text-slate-400 font-semibold px-2 py-1 hover:text-slate-600 cursor-pointer transition-colors">
+                        +{dayTasks.length - 3} more
+                      </span>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-72 p-0" align="start">
+                      <div className="bg-gradient-to-r from-[#00467F] to-[#1669C9] px-4 py-3 rounded-t-md">
+                        <h3 className="font-semibold text-white text-sm">
+                          {format(day, 'EEEE, MMMM d')}
+                        </h3>
+                        <p className="text-white/70 text-xs mt-0.5">
+                          {dayTasks.length} task{dayTasks.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div className="p-2 max-h-64 overflow-y-auto">
+                        {dayTasks.map((task) => (
+                          <Link
+                            key={task.id}
+                            href={`/dashboard/tasks/${task.id}`}
+                            className="block p-2.5 rounded-lg hover:bg-slate-50 transition-colors group"
+                          >
+                            <div className="flex items-start gap-2">
+                              <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priorityDots[task.priority]}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-slate-800 truncate group-hover:text-[#1669C9] transition-colors">
+                                  {task.title}
+                                </p>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                    task.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
+                                    task.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
+                                    'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    {task.status === 'not_started' ? 'Not Started' :
+                                     task.status === 'in_progress' ? 'In Progress' : 'Completed'}
+                                  </span>
+                                  {task.time_estimate && (
+                                    <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      {task.time_estimate}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 )}
               </div>
             </div>
