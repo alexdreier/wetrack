@@ -383,7 +383,7 @@ export function TaskDetail({
                       content={editForm.notes}
                       onChange={(value) => setEditForm({ ...editForm, notes: value })}
                       placeholder="Add notes..."
-                      minHeight="100px"
+                      minHeight="200px"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
