@@ -203,10 +203,7 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
               onValueChange={(value) => updateStatus(value as TaskStatus)}
             >
               <SelectTrigger className={`h-8 text-xs w-[130px] rounded-lg font-medium ${statusConfig[task.status].className}`}>
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${statusConfig[task.status].dot}`} />
-                  <SelectValue />
-                </div>
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="not_started">
