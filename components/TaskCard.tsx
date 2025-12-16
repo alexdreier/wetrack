@@ -15,14 +15,21 @@ import {
 } from '@/components/ui/select'
 import { Calendar, Clock, MessageSquare, Paperclip, ChevronRight, Edit } from 'lucide-react'
 
-// Things 3 app icon - blue square with white star
+// Things 3 app icon - blue frame, white interior, dark checkmark
 function ThingsIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <rect x="2" y="2" width="20" height="20" rx="4.5" fill="#527CED" />
+      {/* Blue outer rounded square */}
+      <rect x="1" y="1" width="22" height="22" rx="5" fill="#4A90D9" />
+      {/* White inner square */}
+      <rect x="3.5" y="3.5" width="17" height="17" rx="2.5" fill="white" />
+      {/* Dark checkmark */}
       <path
-        d="M12 6l1.5 3.5L17 11l-3.5 1.5L12 16l-1.5-3.5L7 11l3.5-1.5L12 6z"
-        fill="white"
+        d="M6.5 12.5L10 16.5L17.5 8"
+        stroke="#3D4552"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   )
