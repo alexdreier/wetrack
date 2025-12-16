@@ -146,4 +146,15 @@
   h1, h2, h3, h4, h5, h6 {
     color: var(--wested-purple);
   }
+  button,
+  [role="button"],
+  a,
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="button"],
+  [data-slot="button"] {
+    cursor: pointer;
+  }
 }
