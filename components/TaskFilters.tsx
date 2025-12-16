@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, ArrowUpDown } from 'lucide-react'
+import { Search, ArrowUpDown, User } from 'lucide-react'
 
 export function TaskFilters() {
   const router = useRouter()
@@ -36,6 +36,22 @@ export function TaskFilters() {
           onChange={(e) => updateFilter('search', e.target.value)}
         />
       </div>
+      <Select
+        defaultValue={searchParams.get('assignee') || 'all'}
+        onValueChange={(value) => updateFilter('assignee', value)}
+      >
+        <SelectTrigger className="w-full sm:w-[140px]">
+          <div className="flex items-center gap-2">
+            <User className="h-3.5 w-3.5 text-slate-400" />
+            <SelectValue placeholder="Assignee" />
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Tasks</SelectItem>
+          <SelectItem value="mine">My Tasks</SelectItem>
+          <SelectItem value="unassigned">Unassigned</SelectItem>
+        </SelectContent>
+      </Select>
       <Select
         defaultValue={searchParams.get('status') || 'all'}
         onValueChange={(value) => updateFilter('status', value)}

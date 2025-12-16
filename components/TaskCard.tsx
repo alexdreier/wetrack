@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Calendar, Clock, MessageSquare, Paperclip, ChevronRight } from 'lucide-react'
+import { Calendar, Clock, MessageSquare, Paperclip, ChevronRight, Edit } from 'lucide-react'
 import { toast } from 'sonner'
 import { RichTextDisplay } from './RichTextEditor'
 import { parseLocalDate } from '@/lib/utils'
@@ -232,20 +232,30 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
           {/* Action icons */}
           <div className="flex items-center gap-1">
             <Link
+              href={`/dashboard/tasks/${task.id}?edit=true`}
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-blue-50 transition-colors"
+              title="Edit task"
+            >
+              <Edit className="h-4 w-4" />
+            </Link>
+            <Link
               href={`/dashboard/tasks/${task.id}#comments`}
               className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-blue-50 transition-colors"
+              title="Comments"
             >
               <MessageSquare className="h-4 w-4" />
             </Link>
             <Link
               href={`/dashboard/tasks/${task.id}#attachments`}
               className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-blue-50 transition-colors"
+              title="Attachments"
             >
               <Paperclip className="h-4 w-4" />
             </Link>
             <Link
               href={`/dashboard/tasks/${task.id}`}
               className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-blue-50 transition-colors"
+              title="View details"
             >
               <ChevronRight className="h-4 w-4" />
             </Link>

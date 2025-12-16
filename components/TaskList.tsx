@@ -28,6 +28,7 @@ export function TaskList({ initialTasks, profiles, currentUserId }: TaskListProp
     const search = searchParams.get('search')?.toLowerCase()
     const status = searchParams.get('status')
     const priority = searchParams.get('priority')
+    const assignee = searchParams.get('assignee')
 
     if (search && !task.title.toLowerCase().includes(search) &&
         !task.notes?.toLowerCase().includes(search)) {
@@ -38,6 +39,14 @@ export function TaskList({ initialTasks, profiles, currentUserId }: TaskListProp
     }
     if (priority && priority !== 'all' && task.priority !== priority) {
       return false
+    }
+    if (assignee && assignee !== 'all') {
+      if (assignee === 'mine' && task.assigned_to !== currentUserId) {
+        return false
+      }
+      if (assignee === 'unassigned' && task.assigned_to !== null) {
+        return false
+      }
     }
     return true
   })

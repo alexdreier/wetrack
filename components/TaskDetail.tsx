@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import {
@@ -88,7 +88,8 @@ export function TaskDetail({
   const [comments, setComments] = useState(initialComments)
   const [attachments, setAttachments] = useState(initialAttachments)
   const [activities, setActivities] = useState(initialActivities)
-  const [isEditing, setIsEditing] = useState(false)
+  const searchParams = useSearchParams()
+  const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
