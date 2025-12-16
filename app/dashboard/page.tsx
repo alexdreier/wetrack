@@ -40,9 +40,21 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-[#00467F] to-[#1669C9] rounded-2xl p-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#00467F] via-[#1669C9] to-[#3C3675] rounded-2xl p-6 text-white shadow-xl overflow-hidden relative">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#54B948]/20 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex items-center justify-between">
           <div>
+            <div className="flex items-center gap-3 mb-2">
+              <img
+                src="https://wested2024.s3.us-west-1.amazonaws.com/wp-content/uploads/2024/06/11163339/wested-logo.svg"
+                alt="WestEd"
+                className="h-6 brightness-0 invert opacity-70"
+              />
+              <span className="text-white/70 text-sm font-medium">WE Track</span>
+            </div>
             <h1 className="text-2xl font-bold">Welcome back, {firstName}!</h1>
             <p className="text-white/80 mt-1">
               Here&apos;s what&apos;s happening with your tasks today.
@@ -52,8 +64,8 @@ export default async function DashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+        <div className="relative grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 border border-white/10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <ListTodo className="h-5 w-5 text-white" />
@@ -65,9 +77,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 border border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#54B948]/50 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#54B948] rounded-full flex items-center justify-center shadow-lg">
                 <CheckCircle className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -77,9 +89,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 border border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-yellow-500/50 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
                 <Clock className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -89,9 +101,9 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 border border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-500/50 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
                 <AlertTriangle className="h-5 w-5 text-white" />
               </div>
               <div>

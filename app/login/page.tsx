@@ -59,13 +59,18 @@ export default function LoginPage() {
       {/* Left side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#00467F] via-[#1669C9] to-[#3C3675] p-12 flex-col justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-              <span className="text-[#00467F] font-bold text-xl">W</span>
-            </div>
+          <div className="flex items-center gap-4">
+            <img
+              src="https://wested2024.s3.us-west-1.amazonaws.com/wp-content/uploads/2024/06/11163339/wested-logo.svg"
+              alt="WestEd"
+              className="h-12 brightness-0 invert"
+            />
+            <div className="h-10 w-px bg-white/30" />
             <div>
-              <span className="text-white font-bold text-2xl">WETrack</span>
-              <p className="text-white/70 text-sm">by WestEd</p>
+              <span className="text-white font-bold text-2xl tracking-wide">
+                WE <span className="text-[#54B948]">Track</span>
+              </span>
+              <p className="text-white/70 text-sm">Task Management</p>
             </div>
           </div>
         </div>
@@ -110,11 +115,16 @@ export default function LoginPage() {
         <Card className="w-full max-w-md shadow-xl border-0">
           <CardHeader className="space-y-1 text-center pb-2">
             <div className="flex justify-center mb-4 lg:hidden">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-[#00467F] rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">W</span>
-                </div>
-                <span className="text-[#00467F] font-bold text-xl">WETrack</span>
+              <div className="flex items-center gap-3">
+                <img
+                  src="https://wested2024.s3.us-west-1.amazonaws.com/wp-content/uploads/2024/06/11163339/wested-logo.svg"
+                  alt="WestEd"
+                  className="h-8"
+                />
+                <div className="h-6 w-px bg-slate-300" />
+                <span className="text-[#00467F] font-bold text-xl tracking-wide">
+                  WE <span className="text-[#54B948]">Track</span>
+                </span>
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-[#3C3675]">
