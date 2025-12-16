@@ -15,8 +15,7 @@ import {
   endOfWeek,
   isToday
 } from 'date-fns'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import Link from 'next/link'
 
 interface CalendarViewProps {
@@ -25,6 +24,12 @@ interface CalendarViewProps {
 }
 
 const priorityColors = {
+  urgent: 'bg-gradient-to-r from-red-500 to-red-600',
+  normal: 'bg-gradient-to-r from-amber-500 to-amber-600',
+  rainy_day: 'bg-gradient-to-r from-slate-400 to-slate-500',
+}
+
+const priorityDots = {
   urgent: 'bg-red-500',
   normal: 'bg-amber-500',
   rainy_day: 'bg-slate-400',
@@ -48,50 +53,47 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
       {/* Header */}
-      <div className={`bg-gradient-to-r from-[#00467F] to-[#1669C9] ${compact ? 'px-4 py-3' : 'px-6 py-4'}`}>
+      <div className={`bg-gradient-to-r from-[#00467F] to-[#1669C9] ${compact ? 'px-4 py-3' : 'px-6 py-5'}`}>
         <div className="flex items-center justify-between">
-          <h2 className={`font-semibold text-white ${compact ? 'text-base' : 'text-lg'}`}>
-            {format(currentMonth, compact ? 'MMM yyyy' : 'MMMM yyyy')}
-          </h2>
+          <div className="flex items-center gap-3">
+            {!compact && <Calendar className="h-5 w-5 text-white/80" />}
+            <h2 className={`font-semibold text-white ${compact ? 'text-base' : 'text-xl tracking-tight'}`}>
+              {format(currentMonth, compact ? 'MMM yyyy' : 'MMMM yyyy')}
+            </h2>
+          </div>
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className={`text-white hover:bg-white/20 ${compact ? 'h-7 w-7' : 'h-8 w-8'}`}
+              className={`text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors ${compact ? 'h-7 w-7' : 'h-9 w-9'} flex items-center justify-center`}
             >
               <ChevronLeft className="h-4 w-4" />
-            </Button>
+            </button>
             {!compact && (
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={() => setCurrentMonth(new Date())}
-                className="text-white hover:bg-white/20 text-xs"
+                className="text-white/90 hover:text-white hover:bg-white/20 rounded-lg transition-colors text-xs font-medium px-3 py-1.5"
               >
                 Today
-              </Button>
+              </button>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className={`text-white hover:bg-white/20 ${compact ? 'h-7 w-7' : 'h-8 w-8'}`}
+              className={`text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors ${compact ? 'h-7 w-7' : 'h-9 w-9'} flex items-center justify-center`}
             >
               <ChevronRight className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Days of week header */}
-      <div className="grid grid-cols-7 border-b bg-slate-50">
+      <div className="grid grid-cols-7 bg-slate-50/80 border-b border-slate-100">
         {(compact ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']).map((day, i) => (
           <div
             key={i}
-            className={`text-center text-xs font-medium text-slate-500 ${compact ? 'py-1.5' : 'py-2'}`}
+            className={`text-center text-xs font-semibold text-slate-500 uppercase tracking-wider ${compact ? 'py-2' : 'py-3'}`}
           >
             {day}
           </div>
@@ -112,26 +114,26 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
             return (
               <div
                 key={idx}
-                className={`h-10 border-b border-r flex flex-col items-center justify-center relative ${
-                  !isCurrentMonth ? 'bg-slate-50' : 'bg-white'
+                className={`h-11 border-b border-r border-slate-100 flex flex-col items-center justify-center relative transition-colors ${
+                  !isCurrentMonth ? 'bg-slate-50/50' : 'bg-white hover:bg-slate-50'
                 } ${idx % 7 === 6 ? 'border-r-0' : ''}`}
               >
                 <span
-                  className={`text-xs flex items-center justify-center w-6 h-6 rounded-full ${
+                  className={`text-xs flex items-center justify-center w-7 h-7 rounded-full font-medium transition-colors ${
                     isCurrentDay
-                      ? 'bg-[#00467F] text-white font-bold'
+                      ? 'bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white shadow-sm'
                       : !isCurrentMonth
                       ? 'text-slate-300'
-                      : 'text-slate-700'
+                      : 'text-slate-600'
                   }`}
                 >
                   {format(day, 'd')}
                 </span>
                 {dayTasks.length > 0 && (
                   <div className="flex gap-0.5 mt-0.5">
-                    {hasUrgent && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
-                    {hasNormal && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
-                    {hasRainyDay && <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
+                    {hasUrgent && <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-sm" />}
+                    {hasNormal && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-sm" />}
+                    {hasRainyDay && <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shadow-sm" />}
                   </div>
                 )}
               </div>
@@ -141,18 +143,18 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
           return (
             <div
               key={idx}
-              className={`min-h-[100px] border-b border-r p-1 ${
-                !isCurrentMonth ? 'bg-slate-50' : 'bg-white'
+              className={`min-h-[110px] border-b border-r border-slate-100 p-2 transition-colors ${
+                !isCurrentMonth ? 'bg-slate-50/50' : 'bg-white hover:bg-slate-50/50'
               } ${idx % 7 === 6 ? 'border-r-0' : ''}`}
             >
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <span
-                  className={`text-sm w-7 h-7 flex items-center justify-center rounded-full ${
+                  className={`text-sm w-7 h-7 flex items-center justify-center rounded-full font-medium transition-colors ${
                     isCurrentDay
-                      ? 'bg-[#00467F] text-white font-bold'
+                      ? 'bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white shadow-sm'
                       : !isCurrentMonth
                       ? 'text-slate-300'
-                      : 'text-slate-700'
+                      : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   {format(day, 'd')}
@@ -163,15 +165,15 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
                   <Link
                     key={task.id}
                     href={`/dashboard/tasks/${task.id}`}
-                    className={`block text-xs px-1.5 py-0.5 rounded truncate text-white ${
+                    className={`block text-[11px] px-2 py-1 rounded-md truncate text-white font-medium shadow-sm ${
                       priorityColors[task.priority]
-                    } hover:opacity-80 transition-opacity`}
+                    } hover:shadow-md hover:scale-[1.02] transition-all duration-150`}
                   >
                     {task.title}
                   </Link>
                 ))}
                 {dayTasks.length > 3 && (
-                  <span className="text-xs text-slate-500 px-1.5">
+                  <span className="text-[11px] text-slate-500 font-medium px-2 hover:text-slate-700 cursor-pointer">
                     +{dayTasks.length - 3} more
                   </span>
                 )}
@@ -183,19 +185,19 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
 
       {/* Legend - only show in non-compact mode */}
       {!compact && (
-        <div className="px-4 py-3 border-t bg-slate-50 flex items-center gap-4 text-xs">
-          <span className="text-slate-500">Priority:</span>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-slate-600">Urgent</span>
+        <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center gap-5 text-xs">
+          <span className="text-slate-400 font-medium uppercase tracking-wider text-[10px]">Priority</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+            <span className="text-slate-600 font-medium">Urgent</span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span className="text-slate-600">Normal</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm" />
+            <span className="text-slate-600 font-medium">Normal</span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-slate-400" />
-            <span className="text-slate-600">Rainy Day</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shadow-sm" />
+            <span className="text-slate-600 font-medium">Rainy Day</span>
           </div>
         </div>
       )}
