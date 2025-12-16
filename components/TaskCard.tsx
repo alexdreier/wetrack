@@ -21,13 +21,13 @@ function ThingsIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       {/* Blue outer rounded square */}
       <rect x="1" y="1" width="22" height="22" rx="5" fill="#4A90D9" />
-      {/* White inner square */}
-      <rect x="3.5" y="3.5" width="17" height="17" rx="2.5" fill="white" />
+      {/* White inner square - smaller for thicker blue frame */}
+      <rect x="5" y="5" width="14" height="14" rx="2" fill="white" />
       {/* Dark checkmark */}
       <path
-        d="M6.5 12.5L10 16.5L17.5 8"
+        d="M7 12L10.5 15.5L17 9"
         stroke="#3D4552"
-        strokeWidth="2.5"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
