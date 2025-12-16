@@ -34,6 +34,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
     notify_on_assignment: profile?.notify_on_assignment ?? true,
     notify_on_comments: profile?.notify_on_comments ?? true,
     notify_on_status_change: profile?.notify_on_status_change ?? true,
+    things_integration: profile?.things_integration ?? false,
   })
 
   const [passwordData, setPasswordData] = useState({
@@ -108,6 +109,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
         notify_on_assignment: formData.notify_on_assignment,
         notify_on_comments: formData.notify_on_comments,
         notify_on_status_change: formData.notify_on_status_change,
+        things_integration: formData.things_integration,
       })
       .eq('id', userId)
 
@@ -302,6 +304,34 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
 
           <Button onClick={handleProfileUpdate} disabled={loading}>
             {loading ? 'Saving...' : 'Save Notification Preferences'}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Integrations</CardTitle>
+          <CardDescription>Connect with other apps</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="things_integration">Things 3 Integration</Label>
+              <p className="text-sm text-slate-500">
+                Show "Send to Things" button on tasks (requires Things app)
+              </p>
+            </div>
+            <Switch
+              id="things_integration"
+              checked={formData.things_integration}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, things_integration: checked })
+              }
+            />
+          </div>
+
+          <Button onClick={handleProfileUpdate} disabled={loading}>
+            {loading ? 'Saving...' : 'Save Integration Settings'}
           </Button>
         </CardContent>
       </Card>

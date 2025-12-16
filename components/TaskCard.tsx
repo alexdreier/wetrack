@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Calendar, Clock, MessageSquare, Paperclip, ChevronRight, Edit } from 'lucide-react'
+import { Calendar, Clock, MessageSquare, Paperclip, ChevronRight, Edit, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { RichTextDisplay } from './RichTextEditor'
 import { parseLocalDate } from '@/lib/utils'
@@ -56,6 +56,29 @@ const statusConfig = {
 
 export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardProps) {
   const supabase = createClient()
+  const currentUserProfile = profiles.find(p => p.id === currentUserId)
+  const showThingsButton = currentUserProfile?.things_integration ?? false
+
+  function sendToThings() {
+    const params = new URLSearchParams()
+    params.set('title', task.title)
+    if (task.notes) {
+      // Strip HTML tags for Things notes
+      const plainNotes = task.notes.replace(/<[^>]*>/g, '')
+      params.set('notes', plainNotes)
+    }
+    if (task.due_date) {
+      params.set('deadline', task.due_date)
+    }
+    // Map priority to Things when parameter
+    if (task.priority === 'urgent') {
+      params.set('when', 'today')
+    }
+
+    const thingsUrl = `things:///add?${params.toString()}`
+    window.open(thingsUrl, '_self')
+    toast.success('Sent to Things')
+  }
 
   async function updateStatus(newStatus: TaskStatus) {
     const { error } = await supabase
@@ -233,6 +256,15 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
 
           {/* Action icons */}
           <div className="flex items-center gap-0.5 bg-slate-100/60 rounded-xl p-1">
+            {showThingsButton && (
+              <button
+                onClick={sendToThings}
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-white hover:shadow-sm transition-all duration-200"
+                title="Send to Things"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </button>
+            )}
             <Link
               href={`/dashboard/tasks/${task.id}?edit=true`}
               className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-white hover:shadow-sm transition-all duration-200"

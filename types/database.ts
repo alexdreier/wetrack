@@ -19,6 +19,7 @@ export interface Profile {
   notify_on_assignment: boolean
   notify_on_comments: boolean
   notify_on_status_change: boolean
+  things_integration: boolean
   created_at: string
 }
 
