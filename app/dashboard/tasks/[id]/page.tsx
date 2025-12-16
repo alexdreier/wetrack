@@ -2,6 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { TaskDetail } from '@/components/TaskDetail'
 
+// Disable caching to always fetch fresh data
+export const dynamic = 'force-dynamic'
+
 interface TaskPageProps {
   params: Promise<{ id: string }>
 }

@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { DashboardContent } from '@/components/DashboardContent'
 
+// Disable caching to always fetch fresh data
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const supabase = await createClient()
 

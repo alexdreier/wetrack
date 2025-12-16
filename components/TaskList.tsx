@@ -18,6 +18,11 @@ export function TaskList({ initialTasks, profiles, currentUserId }: TaskListProp
   const searchParams = useSearchParams()
   const supabase = createClient()
 
+  // Sync with initialTasks when they change (e.g., after navigation)
+  useEffect(() => {
+    setTasks(initialTasks)
+  }, [initialTasks])
+
   // Filter tasks based on search params
   const filteredTasks = tasks.filter((task) => {
     const search = searchParams.get('search')?.toLowerCase()
