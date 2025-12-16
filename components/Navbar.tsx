@@ -66,7 +66,7 @@ export function Navbar({ user, profile }: NavbarProps) {
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/10">
                   <Avatar className="h-10 w-10 border-2 border-white/30">
                     {profile?.avatar_url && (
-                      <AvatarImage src={profile.avatar_url} alt={profile.full_name || 'User'} />
+                      <AvatarImage src={profile.avatar_url} alt={profile.full_name || 'User'} className="object-cover" />
                     )}
                     <AvatarFallback className="bg-[#54B948] text-white font-bold">
                       {initials}
