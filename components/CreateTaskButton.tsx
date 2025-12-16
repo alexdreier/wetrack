@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus } from 'lucide-react'
+import { Plus, FileText, Calendar, Users, Flag, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface CreateTaskButtonProps {
@@ -112,128 +112,183 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
           New Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Task title"
-              required
-            />
-          </div>
+      <DialogContent className="max-w-xl p-0 overflow-hidden">
+        {/* Header with gradient */}
+        <div className="bg-gradient-to-r from-[#00467F] to-[#1669C9] px-6 py-4">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Create New Task
+            </DialogTitle>
+          </DialogHeader>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Additional details..."
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) => setFormData({ ...formData, priority: value as Priority })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                  <SelectItem value="next_week">Next Week</SelectItem>
-                  <SelectItem value="rainy_day">Rainy Day</SelectItem>
-                </SelectContent>
-              </Select>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Task Details Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#00467F]">
+              <FileText className="h-4 w-4" />
+              Task Details
             </div>
-
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value as TaskStatus })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_started">Not Started</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="space-y-3 pl-6">
+              <div className="space-y-1.5">
+                <Label htmlFor="title" className="text-slate-600">Title *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="What needs to be done?"
+                  required
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notes" className="text-slate-600">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Add any additional details or context..."
+                  rows={2}
+                  className="resize-none"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-              />
+          {/* Priority & Status Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#00467F]">
+              <Flag className="h-4 w-4" />
+              Priority & Status
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="due_date">Due Date</Label>
-              <Input
-                id="due_date"
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="time_estimate">Time Estimate</Label>
-              <Input
-                id="time_estimate"
-                value={formData.time_estimate}
-                onChange={(e) => setFormData({ ...formData, time_estimate: e.target.value })}
-                placeholder="e.g., 2 hours"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Assign To</Label>
-              <Select
-                value={formData.assigned_to}
-                onValueChange={(value) => setFormData({ ...formData, assigned_to: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select assignee" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {profiles.map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.full_name || profile.email}
+            <div className="grid grid-cols-2 gap-4 pl-6">
+              <div className="space-y-1.5">
+                <Label className="text-slate-600">Priority</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value as Priority })}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="urgent">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                        Urgent
+                      </span>
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    <SelectItem value="next_week">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                        Next Week
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="rainy_day">
+                      <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-500" />
+                        Rainy Day
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-600">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as TaskStatus })}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_started">Not Started</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          {/* Schedule Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#00467F]">
+              <Calendar className="h-4 w-4" />
+              Schedule
+            </div>
+            <div className="grid grid-cols-3 gap-4 pl-6">
+              <div className="space-y-1.5">
+                <Label htmlFor="start_date" className="text-slate-600">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="due_date" className="text-slate-600">Due Date</Label>
+                <Input
+                  id="due_date"
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="time_estimate" className="text-slate-600">Estimate</Label>
+                <Input
+                  id="time_estimate"
+                  value={formData.time_estimate}
+                  onChange={(e) => setFormData({ ...formData, time_estimate: e.target.value })}
+                  placeholder="e.g., 2h"
+                  className="h-10"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Assignment Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-[#00467F]">
+              <Users className="h-4 w-4" />
+              Assignment
+            </div>
+            <div className="pl-6">
+              <div className="space-y-1.5">
+                <Label className="text-slate-600">Assign To</Label>
+                <Select
+                  value={formData.assigned_to}
+                  onValueChange={(value) => setFormData({ ...formData, assigned_to: value })}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select team member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {profiles.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.full_name || profile.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="bg-[#00467F] hover:bg-[#00467F]/90">
               {loading ? 'Creating...' : 'Create Task'}
             </Button>
           </div>
