@@ -13,7 +13,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Calendar, Clock, MessageSquare, Paperclip, ChevronRight, Edit, ExternalLink } from 'lucide-react'
+import { Calendar, Clock, MessageSquare, Paperclip, ChevronRight, Edit } from 'lucide-react'
+
+// Things 3 app icon (simplified)
+function ThingsIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="3" y="3" width="18" height="18" rx="4" fill="#4A90D9" />
+      <path
+        d="M7 12.5L10.5 16L17 9"
+        stroke="white"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 import { toast } from 'sonner'
 import { RichTextDisplay } from './RichTextEditor'
 import { parseLocalDate } from '@/lib/utils'
@@ -60,24 +76,34 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
   const showThingsButton = currentUserProfile?.things_integration ?? false
 
   function sendToThings() {
-    const params = new URLSearchParams()
-    params.set('title', task.title)
+    const params: string[] = []
+    params.push(`title=${encodeURIComponent(task.title)}`)
+
     if (task.notes) {
-      // Strip HTML tags for Things notes
-      const plainNotes = task.notes.replace(/<[^>]*>/g, '')
-      params.set('notes', plainNotes)
+      // Strip HTML tags and decode HTML entities for Things notes
+      const plainNotes = task.notes
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&amp;/g, '&')  // Decode &amp;
+        .replace(/&lt;/g, '<')   // Decode &lt;
+        .replace(/&gt;/g, '>')   // Decode &gt;
+        .replace(/&quot;/g, '"') // Decode &quot;
+        .replace(/&#39;/g, "'")  // Decode &#39;
+        .replace(/&nbsp;/g, ' ') // Decode &nbsp;
+        .trim()
+      if (plainNotes) {
+        params.push(`notes=${encodeURIComponent(plainNotes)}`)
+      }
     }
     if (task.due_date) {
-      params.set('deadline', task.due_date)
+      params.push(`deadline=${encodeURIComponent(task.due_date)}`)
     }
     // Map priority to Things when parameter
     if (task.priority === 'urgent') {
-      params.set('when', 'today')
+      params.push('when=today')
     }
 
-    const thingsUrl = `things:///add?${params.toString()}`
-    window.open(thingsUrl, '_self')
-    toast.success('Sent to Things')
+    const thingsUrl = `things:///add?${params.join('&')}`
+    window.location.href = thingsUrl
   }
 
   async function updateStatus(newStatus: TaskStatus) {
@@ -259,10 +285,10 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
             {showThingsButton && (
               <button
                 onClick={sendToThings}
-                className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-white hover:shadow-sm transition-all duration-200"
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white hover:shadow-sm transition-all duration-200"
                 title="Send to Things"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ThingsIcon className="h-4 w-4" />
               </button>
             )}
             <Link
