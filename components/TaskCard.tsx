@@ -29,32 +29,29 @@ interface TaskCardProps {
 const priorityConfig = {
   urgent: {
     label: 'Urgent',
-    className: 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm shadow-red-200',
-    border: 'border-l-red-500',
+    badge: 'bg-red-500/10 text-red-700 ring-1 ring-red-500/20',
+    accent: 'from-red-500 to-rose-500',
     dot: 'bg-red-500',
-    glow: 'shadow-red-100'
   },
   normal: {
     label: 'Normal',
-    className: 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-sm shadow-amber-200',
-    border: 'border-l-amber-500',
+    badge: 'bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/20',
+    accent: 'from-amber-500 to-orange-500',
     dot: 'bg-amber-500',
-    glow: 'shadow-amber-100'
   },
   rainy_day: {
     label: 'Rainy Day',
-    className: 'bg-gradient-to-r from-slate-400 to-slate-500 text-white shadow-sm shadow-slate-200',
-    border: 'border-l-slate-400',
+    badge: 'bg-slate-500/10 text-slate-600 ring-1 ring-slate-500/20',
+    accent: 'from-slate-400 to-slate-500',
     dot: 'bg-slate-400',
-    glow: 'shadow-slate-100'
   },
 }
 
 // Status = WHERE it is in the workflow (progress)
 const statusConfig = {
-  not_started: { label: 'Not Started', className: 'bg-slate-50 text-slate-600 border border-slate-200', dot: 'bg-slate-400' },
-  in_progress: { label: 'In Progress', className: 'bg-blue-50 text-blue-700 border border-blue-200', dot: 'bg-blue-500' },
-  completed: { label: 'Completed', className: 'bg-green-50 text-green-700 border border-green-200', dot: 'bg-green-500' },
+  not_started: { label: 'Not Started', className: 'bg-slate-100/80 text-slate-600 ring-1 ring-slate-200', dot: 'bg-slate-400' },
+  in_progress: { label: 'In Progress', className: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200', dot: 'bg-blue-500' },
+  completed: { label: 'Completed', className: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },
 }
 
 export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardProps) {
@@ -122,59 +119,64 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
   const isCompleted = task.status === 'completed'
 
   return (
-    <div className={`group relative bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200 overflow-hidden ${isCompleted ? 'opacity-60' : ''}`}>
-      {/* Priority accent bar */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 ${priorityConfig[task.priority].dot}`} />
+    <div className={`group relative bg-gradient-to-br from-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] hover:border-slate-300/60 transition-all duration-300 overflow-hidden ${isCompleted ? 'opacity-50' : ''}`}>
+      {/* Priority accent gradient bar */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${priorityConfig[task.priority].accent}`} />
 
-      <div className="p-5 pl-6">
+      {/* Subtle top highlight */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
+
+      <div className="p-5 pl-7">
         {/* Header row */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <Link href={`/dashboard/tasks/${task.id}`} className="group/link">
-              <h3 className={`font-semibold text-[15px] leading-tight group-hover/link:text-[#1669C9] transition-colors ${isCompleted ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
+            <Link href={`/dashboard/tasks/${task.id}`} className="group/link inline-block">
+              <h3 className={`font-semibold text-base leading-snug tracking-tight group-hover/link:text-[#1669C9] transition-colors duration-200 ${isCompleted ? 'text-slate-400 line-through decoration-slate-300' : 'text-slate-800'}`}>
                 {task.title}
               </h3>
             </Link>
             {task.notes && (
-              <div className="text-sm text-slate-500 mt-2 line-clamp-2 leading-relaxed">
+              <div className="text-[13px] text-slate-500 mt-2 line-clamp-2 leading-relaxed">
                 <RichTextDisplay content={task.notes} className="[&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0" />
               </div>
             )}
           </div>
 
           {/* Priority badge */}
-          <Badge className={`${priorityConfig[task.priority].className} px-3 py-1 text-xs font-medium rounded-full`}>
+          <span className={`${priorityConfig[task.priority].badge} px-3 py-1.5 text-[11px] font-semibold rounded-full uppercase tracking-wide`}>
             {priorityConfig[task.priority].label}
-          </Badge>
+          </span>
         </div>
 
         {/* Meta info row */}
-        <div className="flex items-center gap-4 mt-4 text-xs text-slate-500">
-          {task.due_date && (
-            <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-full">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" />
-              <span className="font-medium">{format(parseLocalDate(task.due_date), 'MMM d')}</span>
-            </span>
-          )}
-          {task.time_estimate && (
-            <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-full">
-              <Clock className="h-3.5 w-3.5 text-slate-400" />
-              <span className="font-medium">{task.time_estimate}</span>
-            </span>
-          )}
-        </div>
+        {(task.due_date || task.time_estimate) && (
+          <div className="flex items-center gap-3 mt-4">
+            {task.due_date && (
+              <span className="inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-100 shadow-sm">
+                <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                <span className="text-xs font-medium text-slate-600">{format(parseLocalDate(task.due_date), 'MMM d')}</span>
+              </span>
+            )}
+            {task.time_estimate && (
+              <span className="inline-flex items-center gap-1.5 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-100 shadow-sm">
+                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                <span className="text-xs font-medium text-slate-600">{task.time_estimate}</span>
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Footer row */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-          <div className="flex items-center gap-6">
+        <div className="flex items-end justify-between mt-5 pt-4 border-t border-slate-100/80">
+          <div className="flex items-end gap-8">
             {/* Lead dropdown */}
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Lead</span>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Lead</span>
               <Select
                 value={task.assigned_to || 'unassigned'}
                 onValueChange={updateAssignee}
               >
-                <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors rounded-lg">
+                <SelectTrigger className="h-9 w-auto min-w-[150px] text-xs bg-white/80 backdrop-blur-sm border-slate-200/80 hover:border-slate-300 hover:bg-white shadow-sm transition-all duration-200 rounded-xl">
                   <SelectValue placeholder="Unassigned" />
                 </SelectTrigger>
                 <SelectContent>
@@ -182,8 +184,8 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
                   {profiles.map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
                       <span className="flex items-center gap-2">
-                        <Avatar className="h-5 w-5">
-                          <AvatarFallback className="text-[10px] bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white font-medium">
+                        <Avatar className="h-5 w-5 ring-2 ring-white shadow-sm">
+                          <AvatarFallback className="text-[10px] bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white font-semibold">
                             {profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
                           </AvatarFallback>
                         </Avatar>
@@ -196,65 +198,65 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
             </div>
 
             {/* Status dropdown */}
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Status</span>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Status</span>
               <Select
                 value={task.status}
                 onValueChange={(value) => updateStatus(value as TaskStatus)}
               >
-                <SelectTrigger className={`h-8 text-xs w-[130px] rounded-lg font-medium ${statusConfig[task.status].className}`}>
+                <SelectTrigger className={`h-9 text-xs w-[140px] rounded-xl font-medium shadow-sm ${statusConfig[task.status].className}`}>
                   <SelectValue />
                 </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="not_started">
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                    Not Started
-                  </span>
-                </SelectItem>
-                <SelectItem value="in_progress">
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
-                    In Progress
-                  </span>
-                </SelectItem>
-                <SelectItem value="completed">
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                    Completed
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  <SelectItem value="not_started">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-slate-400" />
+                      Not Started
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="in_progress">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                      In Progress
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      Completed
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Action icons */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 bg-slate-100/60 rounded-xl p-1">
             <Link
               href={`/dashboard/tasks/${task.id}?edit=true`}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-blue-50 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-white hover:shadow-sm transition-all duration-200"
               title="Edit task"
             >
               <Edit className="h-4 w-4" />
             </Link>
             <Link
               href={`/dashboard/tasks/${task.id}#comments`}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-blue-50 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-white hover:shadow-sm transition-all duration-200"
               title="Comments"
             >
               <MessageSquare className="h-4 w-4" />
             </Link>
             <Link
               href={`/dashboard/tasks/${task.id}#attachments`}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-blue-50 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-white hover:shadow-sm transition-all duration-200"
               title="Attachments"
             >
               <Paperclip className="h-4 w-4" />
             </Link>
             <Link
               href={`/dashboard/tasks/${task.id}`}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-blue-50 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-[#1669C9] hover:bg-white hover:shadow-sm transition-all duration-200"
               title="View details"
             >
               <ChevronRight className="h-4 w-4" />
