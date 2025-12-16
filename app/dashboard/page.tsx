@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { TaskList } from '@/components/TaskList'
 import { TaskFilters } from '@/components/TaskFilters'
 import { CreateTaskButton } from '@/components/CreateTaskButton'
+import { CalendarView } from '@/components/CalendarView'
 import { ListTodo, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
 
 export default async function DashboardPage() {
@@ -92,13 +93,19 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <TaskFilters />
+      {/* Calendar View */}
+      <CalendarView tasks={tasks || []} />
 
-      <TaskList
-        initialTasks={tasks || []}
-        profiles={profiles || []}
-        currentUserId={user?.id || ''}
-      />
+      {/* Task List Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-[#3C3675]">All Tasks</h2>
+        <TaskFilters />
+        <TaskList
+          initialTasks={tasks || []}
+          profiles={profiles || []}
+          currentUserId={user?.id || ''}
+        />
+      </div>
     </div>
   )
 }
