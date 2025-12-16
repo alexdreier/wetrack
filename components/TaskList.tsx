@@ -42,6 +42,32 @@ export function TaskList({ initialTasks, profiles, currentUserId }: TaskListProp
     return true
   })
 
+  // Sort tasks based on sort param
+  const sort = searchParams.get('sort') || 'updated'
+  const priorityOrder = { urgent: 0, normal: 1, rainy_day: 2 }
+
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    switch (sort) {
+      case 'updated':
+        return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()
+      case 'created':
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      case 'due_date':
+        if (!a.due_date && !b.due_date) return 0
+        if (!a.due_date) return 1
+        if (!b.due_date) return -1
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+      case 'lead':
+        const aName = a.assignee?.full_name || 'zzz'
+        const bName = b.assignee?.full_name || 'zzz'
+        return aName.localeCompare(bName)
+      case 'priority':
+        return priorityOrder[a.priority] - priorityOrder[b.priority]
+      default:
+        return 0
+    }
+  })
+
   // Set up real-time subscription
   useEffect(() => {
     const channel = supabase
@@ -91,7 +117,7 @@ export function TaskList({ initialTasks, profiles, currentUserId }: TaskListProp
     }
   }
 
-  if (filteredTasks.length === 0) {
+  if (sortedTasks.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -109,7 +135,7 @@ export function TaskList({ initialTasks, profiles, currentUserId }: TaskListProp
 
   return (
     <div className="space-y-3">
-      {filteredTasks.map((task) => (
+      {sortedTasks.map((task) => (
         <TaskCard
           key={task.id}
           task={task}

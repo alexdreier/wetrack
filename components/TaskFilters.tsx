@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search } from 'lucide-react'
+import { Search, ArrowUpDown } from 'lucide-react'
 
 export function TaskFilters() {
   const router = useRouter()
@@ -92,6 +92,24 @@ export function TaskFilters() {
               Rainy Day
             </span>
           </SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        defaultValue={searchParams.get('sort') || 'updated'}
+        onValueChange={(value) => updateFilter('sort', value)}
+      >
+        <SelectTrigger className="w-full sm:w-[180px]">
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
+            <SelectValue placeholder="Sort by" />
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="updated">Recently Updated</SelectItem>
+          <SelectItem value="created">Recently Created</SelectItem>
+          <SelectItem value="due_date">Due Date</SelectItem>
+          <SelectItem value="lead">Lead (A-Z)</SelectItem>
+          <SelectItem value="priority">Priority</SelectItem>
         </SelectContent>
       </Select>
     </div>

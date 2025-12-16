@@ -166,40 +166,45 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
 
         {/* Footer row */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-          <div className="flex items-center gap-3">
-            {/* Assignee dropdown */}
-            <Select
-              value={task.assigned_to || 'unassigned'}
-              onValueChange={updateAssignee}
-            >
-              <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors rounded-lg">
-                <SelectValue placeholder="Unassigned" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
-                {profiles.map((profile) => (
-                  <SelectItem key={profile.id} value={profile.id}>
-                    <span className="flex items-center gap-2">
-                      <Avatar className="h-5 w-5">
-                        <AvatarFallback className="text-[10px] bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white font-medium">
-                          {profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      {profile.full_name || profile.email}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-6">
+            {/* Lead dropdown */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Lead</span>
+              <Select
+                value={task.assigned_to || 'unassigned'}
+                onValueChange={updateAssignee}
+              >
+                <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors rounded-lg">
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      <span className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarFallback className="text-[10px] bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white font-medium">
+                            {profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        {profile.full_name || profile.email}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Status dropdown */}
-            <Select
-              value={task.status}
-              onValueChange={(value) => updateStatus(value as TaskStatus)}
-            >
-              <SelectTrigger className={`h-8 text-xs w-[130px] rounded-lg font-medium ${statusConfig[task.status].className}`}>
-                <SelectValue />
-              </SelectTrigger>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Status</span>
+              <Select
+                value={task.status}
+                onValueChange={(value) => updateStatus(value as TaskStatus)}
+              >
+                <SelectTrigger className={`h-8 text-xs w-[130px] rounded-lg font-medium ${statusConfig[task.status].className}`}>
+                  <SelectValue />
+                </SelectTrigger>
               <SelectContent>
                 <SelectItem value="not_started">
                   <span className="flex items-center gap-2">
@@ -221,6 +226,7 @@ export function TaskCard({ task, profiles, currentUserId, onUpdate }: TaskCardPr
                 </SelectItem>
               </SelectContent>
             </Select>
+            </div>
           </div>
 
           {/* Action icons */}
