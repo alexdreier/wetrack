@@ -43,20 +43,14 @@ export function Navbar({ user, profile }: NavbarProps) {
     <nav className="bg-gradient-to-r from-[#00467F] to-[#1669C9] sticky top-0 z-50 shadow-lg">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex items-center justify-between h-16">
-          <Link href="/dashboard" className="flex items-center gap-4">
-            {/* WestEd Logo */}
+          <Link href="/dashboard" className="flex items-center gap-3">
             <img
               src="https://wested2024.s3.us-west-1.amazonaws.com/wp-content/uploads/2024/06/11163339/wested-logo.svg"
               alt="WestEd"
-              className="h-10 brightness-0 invert"
+              className="h-7 brightness-0 invert"
             />
-            <div className="h-8 w-px bg-white/30" />
-            <div className="flex flex-col">
-              <span className="font-bold text-xl text-white leading-tight tracking-wide">
-                WE <span className="text-[#54B948]">Track</span>
-              </span>
-              <span className="text-[10px] text-white/70 leading-tight">Task Management</span>
-            </div>
+            <span className="text-white/40">|</span>
+            <span className="font-semibold text-lg text-white">WE Track</span>
           </Link>
 
           <div className="flex items-center gap-2">
