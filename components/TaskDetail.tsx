@@ -99,7 +99,7 @@ export function TaskDetail({
     time_estimate: task.time_estimate || '',
     start_date: task.start_date || '',
     due_date: task.due_date || '',
-    assigned_to: task.assigned_to || '',
+    assigned_to: task.assigned_to || 'unassigned',
   })
 
   // Real-time subscriptions
@@ -218,8 +218,8 @@ export function TaskDetail({
       updates.due_date = editForm.due_date || null
       changes.push('due_date')
     }
-    if (editForm.assigned_to !== (task.assigned_to || '')) {
-      updates.assigned_to = editForm.assigned_to || null
+    if (editForm.assigned_to !== (task.assigned_to || 'unassigned')) {
+      updates.assigned_to = editForm.assigned_to === 'unassigned' ? null : editForm.assigned_to || null
       changes.push('assigned_to')
     }
 
@@ -427,7 +427,7 @@ export function TaskDetail({
                           <SelectValue placeholder="Unassigned" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Unassigned</SelectItem>
+                          <SelectItem value="unassigned">Unassigned</SelectItem>
                           {profiles.map((p) => (
                             <SelectItem key={p.id} value={p.id}>
                               {p.full_name || p.email}

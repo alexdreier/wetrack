@@ -59,7 +59,7 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
       time_estimate: formData.time_estimate || null,
       start_date: formData.start_date || null,
       due_date: formData.due_date || null,
-      assigned_to: formData.assigned_to || null,
+      assigned_to: formData.assigned_to === 'unassigned' ? null : formData.assigned_to || null,
       created_by: currentUserId,
     })
 
@@ -218,7 +218,7 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {profiles.map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {profile.full_name || profile.email}
