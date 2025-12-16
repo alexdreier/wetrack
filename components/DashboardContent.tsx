@@ -86,31 +86,31 @@ export function DashboardContent({ tasks, profiles, currentUserId, firstName }: 
           </div>
           {/* Priority Row - only incomplete tasks */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-2 sm:p-3 flex items-center gap-2">
+            <div className="bg-white/10 rounded-lg p-2 sm:p-3 flex items-center gap-2">
               <div className="w-7 h-7 sm:w-8 sm:h-8 bg-red-500 rounded-full flex items-center justify-center">
                 <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
               </div>
               <div>
                 <p className="text-lg sm:text-xl font-bold text-white">{urgent}</p>
-                <p className="text-red-200 text-[10px] sm:text-xs">Urgent</p>
+                <p className="text-white/60 text-[10px] sm:text-xs">Urgent</p>
               </div>
             </div>
-            <div className="bg-amber-500/20 border border-amber-400/30 rounded-lg p-2 sm:p-3 flex items-center gap-2">
+            <div className="bg-white/10 rounded-lg p-2 sm:p-3 flex items-center gap-2">
               <div className="w-7 h-7 sm:w-8 sm:h-8 bg-amber-500 rounded-full flex items-center justify-center">
                 <Circle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
               </div>
               <div>
                 <p className="text-lg sm:text-xl font-bold text-white">{normal}</p>
-                <p className="text-amber-200 text-[10px] sm:text-xs">Normal</p>
+                <p className="text-white/60 text-[10px] sm:text-xs">Normal</p>
               </div>
             </div>
-            <div className="bg-slate-500/20 border border-slate-400/30 rounded-lg p-2 sm:p-3 flex items-center gap-2">
+            <div className="bg-white/10 rounded-lg p-2 sm:p-3 flex items-center gap-2">
               <div className="w-7 h-7 sm:w-8 sm:h-8 bg-slate-400 rounded-full flex items-center justify-center">
                 <CloudRain className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
               </div>
               <div>
                 <p className="text-lg sm:text-xl font-bold text-white">{rainyDay}</p>
-                <p className="text-slate-300 text-[10px] sm:text-xs">Rainy Day</p>
+                <p className="text-white/60 text-[10px] sm:text-xs">Rainy Day</p>
               </div>
             </div>
           </div>
