@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { type, taskId, userId, data } = body
 
+    console.log('Notification request:', { type, taskId, userId, data })
+
     const supabase = await createClient()
 
     // Get task details
@@ -29,7 +31,10 @@ export async function POST(request: NextRequest) {
 
     const task = taskData as TaskWithAssignee | null
 
+    console.log('Task found:', task ? { id: task.id, title: task.title, assignee: task.assignee?.email, creator: task.creator?.email } : 'null')
+
     if (!task) {
+      console.log('Task not found for taskId:', taskId)
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
@@ -54,8 +59,8 @@ export async function POST(request: NextRequest) {
 
         if (allProfiles) {
           for (const profile of allProfiles) {
-            // Use notify_on_assignment as a proxy for "notify on new tasks"
-            if (profile.notify_on_assignment) {
+            // Check master toggle AND individual preference
+            if (profile.email_notifications && profile.notify_on_assignment) {
               const email = taskCreatedEmail(task.title, actorName, data?.priority || task.priority, taskUrl)
               await sendEmail({
                 to: profile.email,
@@ -69,12 +74,23 @@ export async function POST(request: NextRequest) {
 
       case 'task_assigned': {
         // Notify the assignee (if not the same person who assigned)
-        if (task.assignee && task.assignee.id !== userId && task.assignee.notify_on_assignment) {
+        console.log('task_assigned check:', {
+          hasAssignee: !!task.assignee,
+          assigneeId: task.assignee?.id,
+          actorId: userId,
+          emailNotifications: task.assignee?.email_notifications,
+          notifyOnAssignment: task.assignee?.notify_on_assignment,
+        })
+        // Check master toggle AND individual preference
+        if (task.assignee && task.assignee.id !== userId && task.assignee.email_notifications && task.assignee.notify_on_assignment) {
+          console.log('Sending assignment email to:', task.assignee.email)
           const email = taskAssignedEmail(task.title, actorName, taskUrl)
           await sendEmail({
             to: task.assignee.email,
             ...email,
           })
+        } else {
+          console.log('Skipping assignment notification - conditions not met')
         }
         break
       }
@@ -83,7 +99,8 @@ export async function POST(request: NextRequest) {
         // Notify task creator and assignee (except the commenter)
         const notifyUsers = []
 
-        if (task.creator && task.creator.id !== userId && task.creator.notify_on_comments) {
+        // Check master toggle AND individual preference
+        if (task.creator && task.creator.id !== userId && task.creator.email_notifications && task.creator.notify_on_comments) {
           notifyUsers.push(task.creator)
         }
 
@@ -91,6 +108,7 @@ export async function POST(request: NextRequest) {
           task.assignee &&
           task.assignee.id !== userId &&
           task.assignee.id !== task.creator?.id &&
+          task.assignee.email_notifications &&
           task.assignee.notify_on_comments
         ) {
           notifyUsers.push(task.assignee)
@@ -115,7 +133,8 @@ export async function POST(request: NextRequest) {
         // Notify task creator and assignee (except the person who changed it)
         const notifyUsers = []
 
-        if (task.creator && task.creator.id !== userId && task.creator.notify_on_status_change) {
+        // Check master toggle AND individual preference
+        if (task.creator && task.creator.id !== userId && task.creator.email_notifications && task.creator.notify_on_status_change) {
           notifyUsers.push(task.creator)
         }
 
@@ -123,6 +142,7 @@ export async function POST(request: NextRequest) {
           task.assignee &&
           task.assignee.id !== userId &&
           task.assignee.id !== task.creator?.id &&
+          task.assignee.email_notifications &&
           task.assignee.notify_on_status_change
         ) {
           notifyUsers.push(task.assignee)
