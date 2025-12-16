@@ -5,11 +5,11 @@ import { format } from 'date-fns'
 import { Comment, Profile } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Send, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { RichTextEditor, RichTextDisplay } from './RichTextEditor'
 
 interface CommentSectionProps {
   taskId: string
@@ -22,16 +22,22 @@ export function CommentSection({ taskId, comments, currentUserId }: CommentSecti
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
+  // Check if the comment has actual content (not just empty tags)
+  const hasContent = (html: string) => {
+    const text = html.replace(/<[^>]*>/g, '').trim()
+    return text.length > 0
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!newComment.trim()) return
+    if (!hasContent(newComment)) return
 
     setLoading(true)
 
     const { error } = await supabase.from('comments').insert({
       task_id: taskId,
       user_id: currentUserId,
-      content: newComment.trim(),
+      content: newComment,
     })
 
     if (error) {
@@ -41,11 +47,24 @@ export function CommentSection({ taskId, comments, currentUserId }: CommentSecti
     }
 
     // Log activity
+    const plainText = newComment.replace(/<[^>]*>/g, '').trim()
     await supabase.from('activity_log').insert({
       task_id: taskId,
       user_id: currentUserId,
       action: 'commented',
-      details: { preview: newComment.slice(0, 100) },
+      details: { preview: plainText.slice(0, 100) },
+    })
+
+    // Send notification for new comment
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'comment_added',
+        taskId: taskId,
+        userId: currentUserId,
+        data: { comment: plainText },
+      }),
     })
 
     setNewComment('')
@@ -66,17 +85,19 @@ export function CommentSection({ taskId, comments, currentUserId }: CommentSecti
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="flex gap-3">
-        <Textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <RichTextEditor
+          content={newComment}
+          onChange={setNewComment}
           placeholder="Write a comment..."
-          className="flex-1"
-          rows={2}
+          minHeight="80px"
         />
-        <Button type="submit" disabled={loading || !newComment.trim()} size="icon">
-          <Send className="h-4 w-4" />
-        </Button>
+        <div className="flex justify-end">
+          <Button type="submit" disabled={loading || !hasContent(newComment)} className="gap-2">
+            <Send className="h-4 w-4" />
+            {loading ? 'Sending...' : 'Send'}
+          </Button>
+        </div>
       </form>
 
       <div className="space-y-3">
@@ -122,9 +143,9 @@ export function CommentSection({ taskId, comments, currentUserId }: CommentSecti
                           </Button>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-slate-700 whitespace-pre-wrap">
-                        {comment.content}
-                      </p>
+                      <div className="mt-1 text-sm text-slate-700">
+                        <RichTextDisplay content={comment.content} />
+                      </div>
                     </div>
                   </div>
                 </CardContent>

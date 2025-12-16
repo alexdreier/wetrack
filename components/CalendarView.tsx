@@ -26,8 +26,8 @@ interface CalendarViewProps {
 
 const priorityColors = {
   urgent: 'bg-red-500',
-  next_week: 'bg-yellow-500',
-  rainy_day: 'bg-blue-500',
+  normal: 'bg-amber-500',
+  rainy_day: 'bg-slate-400',
 }
 
 export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
@@ -105,7 +105,7 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
           const isCurrentMonth = isSameMonth(day, currentMonth)
           const isCurrentDay = isToday(day)
           const hasUrgent = dayTasks.some((t) => t.priority === 'urgent')
-          const hasNextWeek = dayTasks.some((t) => t.priority === 'next_week')
+          const hasNormal = dayTasks.some((t) => t.priority === 'normal')
           const hasRainyDay = dayTasks.some((t) => t.priority === 'rainy_day')
 
           if (compact) {
@@ -130,8 +130,8 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
                 {dayTasks.length > 0 && (
                   <div className="flex gap-0.5 mt-0.5">
                     {hasUrgent && <span className="w-1.5 h-1.5 rounded-full bg-red-500" />}
-                    {hasNextWeek && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />}
-                    {hasRainyDay && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                    {hasNormal && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
+                    {hasRainyDay && <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />}
                   </div>
                 )}
               </div>
@@ -190,11 +190,11 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
             <span className="text-slate-600">Urgent</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-yellow-500" />
-            <span className="text-slate-600">Next Week</span>
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span className="text-slate-600">Normal</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-blue-500" />
+            <span className="w-2 h-2 rounded-full bg-slate-400" />
             <span className="text-slate-600">Rainy Day</span>
           </div>
         </div>

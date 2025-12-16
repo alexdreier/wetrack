@@ -52,6 +52,7 @@ import { toast } from 'sonner'
 import { CommentSection } from './CommentSection'
 import { FileUpload } from './FileUpload'
 import { ActivityFeed } from './ActivityFeed'
+import { RichTextEditor, RichTextDisplay } from './RichTextEditor'
 
 interface TaskDetailProps {
   task: TaskWithAssignee
@@ -63,15 +64,15 @@ interface TaskDetailProps {
 }
 
 const priorityConfig = {
-  urgent: { label: 'Urgent', className: 'bg-red-100 text-red-700' },
-  next_week: { label: 'Next Week', className: 'bg-yellow-100 text-yellow-700' },
-  rainy_day: { label: 'Rainy Day', className: 'bg-[#00467F]/10 text-[#00467F]' },
+  urgent: { label: 'Urgent', className: 'bg-red-500 text-white' },
+  normal: { label: 'Normal', className: 'bg-amber-500 text-white' },
+  rainy_day: { label: 'Rainy Day', className: 'bg-slate-400 text-white' },
 }
 
 const statusConfig = {
-  not_started: { label: 'Not Started', className: 'bg-slate-100 text-slate-700' },
-  in_progress: { label: 'In Progress', className: 'bg-[#1669C9]/10 text-[#1669C9]' },
-  completed: { label: 'Completed', className: 'bg-[#54B948]/10 text-[#54B948]' },
+  not_started: { label: 'Not Started', className: 'bg-slate-100 text-slate-600' },
+  in_progress: { label: 'In Progress', className: 'bg-blue-100 text-blue-700' },
+  completed: { label: 'Completed', className: 'bg-green-100 text-green-700' },
 }
 
 export function TaskDetail({
@@ -246,6 +247,32 @@ export function TaskDetail({
       details: { changes },
     })
 
+    // Send notifications for status or assignee changes
+    if (changes.includes('status')) {
+      fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'status_changed',
+          taskId: task.id,
+          userId: currentUserId,
+          data: { newStatus: editForm.status },
+        }),
+      })
+    }
+
+    if (changes.includes('assigned_to') && editForm.assigned_to !== 'unassigned' && editForm.assigned_to !== currentUserId) {
+      fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'task_assigned',
+          taskId: task.id,
+          userId: currentUserId,
+        }),
+      })
+    }
+
     toast.success('Task updated')
     setIsEditing(false)
     router.refresh()
@@ -350,10 +377,11 @@ export function TaskDetail({
                 <>
                   <div className="space-y-2">
                     <Label>Notes</Label>
-                    <Textarea
-                      value={editForm.notes}
-                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                      rows={4}
+                    <RichTextEditor
+                      content={editForm.notes}
+                      onChange={(value) => setEditForm({ ...editForm, notes: value })}
+                      placeholder="Add notes..."
+                      minHeight="100px"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -368,7 +396,7 @@ export function TaskDetail({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="urgent">Urgent</SelectItem>
-                          <SelectItem value="next_week">Next Week</SelectItem>
+                          <SelectItem value="normal">Normal</SelectItem>
                           <SelectItem value="rainy_day">Rainy Day</SelectItem>
                         </SelectContent>
                       </Select>
@@ -443,7 +471,9 @@ export function TaskDetail({
                   {task.notes && (
                     <div>
                       <Label className="text-slate-500">Notes</Label>
-                      <p className="mt-1 text-slate-700 whitespace-pre-wrap">{task.notes}</p>
+                      <div className="mt-1 text-slate-700">
+                        <RichTextDisplay content={task.notes} />
+                      </div>
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4">

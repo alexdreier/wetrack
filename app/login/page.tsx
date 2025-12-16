@@ -65,7 +65,7 @@ export default function LoginPage() {
             className="h-8 brightness-0 invert"
           />
           <span className="text-white/40">|</span>
-          <span className="text-white font-semibold text-xl">WE Track</span>
+          <span className="text-white font-semibold text-xl">WE Tracker</span>
         </div>
 
         <div className="space-y-8">
@@ -115,7 +115,7 @@ export default function LoginPage() {
                   className="h-6"
                 />
                 <span className="text-slate-300">|</span>
-                <span className="text-[#00467F] font-semibold text-lg">WE Track</span>
+                <span className="text-[#00467F] font-semibold text-lg">WE Tracker</span>
               </div>
             </div>
             <CardTitle className="text-2xl font-bold text-[#3C3675]">

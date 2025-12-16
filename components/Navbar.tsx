@@ -50,7 +50,7 @@ export function Navbar({ user, profile }: NavbarProps) {
               className="h-7 brightness-0 invert"
             />
             <span className="text-white/40">|</span>
-            <span className="font-semibold text-lg text-white">WE Track</span>
+            <span className="font-semibold text-lg text-white">WE Tracker</span>
           </Link>
 
           <div className="flex items-center gap-2">

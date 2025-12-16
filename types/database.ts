@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Priority = 'urgent' | 'next_week' | 'rainy_day'
+export type Priority = 'urgent' | 'normal' | 'rainy_day'
 export type TaskStatus = 'not_started' | 'in_progress' | 'completed'
 export type ActivityAction = 'created' | 'updated' | 'commented' | 'attached' | 'status_changed' | 'assigned'
 

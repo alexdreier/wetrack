@@ -22,8 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, FileText, Calendar, Users, Flag, Clock } from 'lucide-react'
+import { Plus, FileText, Calendar, Users, Flag } from 'lucide-react'
 import { toast } from 'sonner'
+import { RichTextEditor } from './RichTextEditor'
 
 interface CreateTaskButtonProps {
   profiles: Profile[]
@@ -39,7 +40,7 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
   const [formData, setFormData] = useState({
     title: '',
     notes: '',
-    priority: 'next_week' as Priority,
+    priority: 'normal' as Priority,
     status: 'not_started' as TaskStatus,
     time_estimate: '',
     start_date: '',
@@ -86,6 +87,19 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
         action: 'created',
         details: { title: formData.title },
       })
+
+      // Send notification if task is assigned to someone else
+      if (formData.assigned_to && formData.assigned_to !== 'unassigned' && formData.assigned_to !== currentUserId) {
+        fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'task_assigned',
+            taskId: newTask.id,
+            userId: currentUserId,
+          }),
+        })
+      }
     }
 
     toast.success('Task created')
@@ -93,7 +107,7 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
     setFormData({
       title: '',
       notes: '',
-      priority: 'next_week',
+      priority: 'normal',
       status: 'not_started',
       time_estimate: '',
       start_date: '',
@@ -143,14 +157,12 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="notes" className="text-slate-600">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                <Label className="text-slate-600">Notes</Label>
+                <RichTextEditor
+                  content={formData.notes}
+                  onChange={(value) => setFormData({ ...formData, notes: value })}
                   placeholder="Add any additional details or context..."
-                  rows={2}
-                  className="resize-none"
+                  minHeight="60px"
                 />
               </div>
             </div>
@@ -179,15 +191,15 @@ export function CreateTaskButton({ profiles, currentUserId }: CreateTaskButtonPr
                         Urgent
                       </span>
                     </SelectItem>
-                    <SelectItem value="next_week">
+                    <SelectItem value="normal">
                       <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                        Next Week
+                        <span className="w-2 h-2 rounded-full bg-amber-500" />
+                        Normal
                       </span>
                     </SelectItem>
                     <SelectItem value="rainy_day">
                       <span className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-blue-500" />
+                        <span className="w-2 h-2 rounded-full bg-slate-400" />
                         Rainy Day
                       </span>
                     </SelectItem>

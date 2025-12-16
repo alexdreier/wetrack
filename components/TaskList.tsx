@@ -109,6 +109,7 @@ export function TaskList({ initialTasks, profiles, currentUserId }: TaskListProp
           key={task.id}
           task={task}
           profiles={profiles}
+          currentUserId={currentUserId}
           onUpdate={refreshTasks}
         />
       ))}

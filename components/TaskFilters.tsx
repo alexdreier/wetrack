@@ -45,9 +45,24 @@ export function TaskFilters() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="not_started">Not Started</SelectItem>
-          <SelectItem value="in_progress">In Progress</SelectItem>
-          <SelectItem value="completed">Completed</SelectItem>
+          <SelectItem value="not_started">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-slate-400" />
+              Not Started
+            </span>
+          </SelectItem>
+          <SelectItem value="in_progress">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              In Progress
+            </span>
+          </SelectItem>
+          <SelectItem value="completed">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500" />
+              Completed
+            </span>
+          </SelectItem>
         </SelectContent>
       </Select>
       <Select
@@ -59,9 +74,24 @@ export function TaskFilters() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Priority</SelectItem>
-          <SelectItem value="urgent">Urgent</SelectItem>
-          <SelectItem value="next_week">Next Week</SelectItem>
-          <SelectItem value="rainy_day">Rainy Day</SelectItem>
+          <SelectItem value="urgent">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500" />
+              Urgent
+            </span>
+          </SelectItem>
+          <SelectItem value="normal">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              Normal
+            </span>
+          </SelectItem>
+          <SelectItem value="rainy_day">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-slate-400" />
+              Rainy Day
+            </span>
+          </SelectItem>
         </SelectContent>
       </Select>
     </div>
