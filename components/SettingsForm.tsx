@@ -161,7 +161,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
             <div className="flex items-center gap-6">
               <div className="relative">
                 <Avatar className="h-24 w-24 border-4 border-[#00467F]/10">
-                  <AvatarImage src={avatarUrl} alt={formData.full_name} className="object-cover" />
+                  <AvatarImage src={avatarUrl} alt={formData.full_name} className="object-contain" />
                   <AvatarFallback className="text-2xl bg-[#00467F] text-white font-bold">
                     {initials}
                   </AvatarFallback>
