@@ -27,13 +27,14 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // JWT verification without a per-request Auth-server round trip; the
+  // layout's getUser() remains the single authoritative check.
+  const { data } = await supabase.auth.getClaims()
+  const isAuthenticated = !!data?.claims
 
   // Redirect to login if accessing protected routes without auth
   if (
-    !user &&
+    !isAuthenticated &&
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/reset-password') &&
     !request.nextUrl.pathname.startsWith('/auth')
@@ -44,7 +45,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect to dashboard if already logged in and accessing auth pages
-  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname === '/')) {
+  if (
+    isAuthenticated &&
+    (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname === '/')
+  ) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

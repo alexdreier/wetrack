@@ -1,14 +1,27 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { toast } from 'sonner'
-import { CheckSquare, ArrowRight } from 'lucide-react'
+import { Check, ArrowRight } from 'lucide-react'
+
+const FEATURES = [
+  'Real-time collaboration',
+  'Comments & file attachments',
+  'Email notifications',
+]
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -16,16 +29,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [isResetMode, setIsResetMode] = useState(false)
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       toast.error(error.message)
@@ -41,6 +51,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
+    const supabase = createClient()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
     })
@@ -56,113 +67,106 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-[#00467F] via-[#1669C9] to-[#3C3675] p-12 flex-col justify-between">
+      {/* Brand panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-wested-blue p-12 flex-col justify-between">
         <div className="flex items-center gap-3">
-          <img
-            src="https://wested2024.s3.us-west-1.amazonaws.com/wp-content/uploads/2024/06/11163339/wested-logo.svg"
+          <Image
+            src="/wested-logo.svg"
             alt="WestEd"
-            className="h-8 brightness-0 invert"
+            width={121}
+            height={21}
+            className="h-[21px] w-auto brightness-0 invert"
+            priority
           />
-          <span className="text-white/40">|</span>
-          <span className="text-white font-semibold text-xl">WE Tracker</span>
+          <span className="text-white/30">|</span>
+          <span className="text-white font-semibold text-lg">WE Tracker</span>
         </div>
 
-        <div className="space-y-8">
-          <h1 className="text-4xl font-bold text-white leading-tight">
-            Collaborative Task Management
+        <div className="space-y-6 max-w-md">
+          <h1 className="text-3xl font-semibold text-white leading-tight tracking-tight">
+            Collaborative task management
           </h1>
-          <p className="text-white/80 text-lg">
+          <p className="text-white/70">
             Stay organized, work together, and get things done with real-time task tracking.
           </p>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 text-white/90">
-              <div className="w-8 h-8 bg-[#54B948] rounded-full flex items-center justify-center">
-                <CheckSquare className="h-4 w-4 text-white" />
-              </div>
-              <span>Real-time collaboration</span>
-            </div>
-            <div className="flex items-center gap-3 text-white/90">
-              <div className="w-8 h-8 bg-[#54B948] rounded-full flex items-center justify-center">
-                <CheckSquare className="h-4 w-4 text-white" />
-              </div>
-              <span>Comments & file attachments</span>
-            </div>
-            <div className="flex items-center gap-3 text-white/90">
-              <div className="w-8 h-8 bg-[#54B948] rounded-full flex items-center justify-center">
-                <CheckSquare className="h-4 w-4 text-white" />
-              </div>
-              <span>Email notifications</span>
-            </div>
-          </div>
+          <ul className="space-y-3">
+            {FEATURES.map((feature) => (
+              <li key={feature} className="flex items-center gap-3 text-white/90 text-sm">
+                <span className="size-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                  <Check className="size-3 text-wested-green" />
+                </span>
+                {feature}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <p className="text-white/50 text-sm">
-          A WestEd productivity tool
-        </p>
+        <p className="text-white/40 text-sm">A WestEd productivity tool</p>
       </div>
 
-      {/* Right side - Login form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gradient-to-br from-slate-50 to-slate-100">
-        <Card className="w-full max-w-md shadow-xl border-0">
-          <CardHeader className="space-y-1 text-center pb-2">
+      {/* Form panel */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 bg-background">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
             <div className="flex justify-center mb-4 lg:hidden">
               <div className="flex items-center gap-2">
-                <img
-                  src="https://wested2024.s3.us-west-1.amazonaws.com/wp-content/uploads/2024/06/11163339/wested-logo.svg"
+                <Image
+                  src="/wested-logo.svg"
                   alt="WestEd"
-                  className="h-6"
+                  width={104}
+                  height={18}
+                  className="h-[18px] w-auto dark:brightness-0 dark:invert"
                 />
-                <span className="text-slate-300">|</span>
-                <span className="text-[#00467F] font-semibold text-lg">WE Tracker</span>
+                <span className="text-border">|</span>
+                <span className="font-semibold">WE Tracker</span>
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold text-[#3C3675]">
-              {isResetMode ? 'Reset Password' : 'Welcome back'}
+            <CardTitle className="text-xl">
+              {isResetMode ? 'Reset password' : 'Welcome back'}
             </CardTitle>
-            <CardDescription className="text-slate-500">
+            <CardDescription>
               {isResetMode
                 ? 'Enter your email to receive a reset link'
                 : 'Sign in to your account to continue'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
+          <CardContent>
             <form onSubmit={isResetMode ? handlePasswordReset : handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-700">Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@wested.org"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   required
-                  className="h-11"
                 />
               </div>
               {!isResetMode && (
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-700">Password</Label>
+                  <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                     required
-                    className="h-11"
                   />
                 </div>
               )}
-              <Button type="submit" className="w-full h-11 bg-[#00467F] hover:bg-[#00467F]/90" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
-                  'Please wait...'
+                  'Please wait…'
                 ) : isResetMode ? (
-                  'Send Reset Link'
+                  'Send reset link'
                 ) : (
                   <span className="flex items-center gap-2">
-                    Sign In
-                    <ArrowRight className="h-4 w-4" />
+                    Sign in
+                    <ArrowRight className="size-4" />
                   </span>
                 )}
               </Button>
@@ -171,7 +175,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setIsResetMode(!isResetMode)}
-                className="text-sm text-[#1669C9] hover:underline font-medium"
+                className="text-sm text-primary hover:underline font-medium"
               >
                 {isResetMode ? 'Back to sign in' : 'Forgot your password?'}
               </button>

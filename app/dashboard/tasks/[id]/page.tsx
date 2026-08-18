@@ -2,9 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { TaskDetail } from '@/components/TaskDetail'
 
-// Disable caching to always fetch fresh data
-export const dynamic = 'force-dynamic'
-
 interface TaskPageProps {
   params: Promise<{ id: string }>
 }
@@ -13,53 +10,50 @@ export default async function TaskPage({ params }: TaskPageProps) {
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: task, error } = await supabase
-    .from('tasks')
-    .select(`
-      *,
-      assignee:profiles!tasks_assigned_to_fkey(*),
-      creator:profiles!tasks_created_by_fkey(*)
-    `)
-    .eq('id', id)
-    .single()
+  const [
+    { data: task, error },
+    { data: comments },
+    { data: attachments },
+    { data: activities },
+    { data: profiles },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase
+      .from('tasks')
+      .select(
+        `
+        *,
+        assignee:profiles!tasks_assigned_to_fkey(*),
+        creator:profiles!tasks_created_by_fkey(*)
+      `
+      )
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('comments')
+      .select(`*, user:profiles(*)`)
+      .eq('task_id', id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('attachments')
+      .select(`*, user:profiles(*)`)
+      .eq('task_id', id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('activity_log')
+      .select(`*, user:profiles(*)`)
+      .eq('task_id', id)
+      .order('created_at', { ascending: false })
+      .limit(20),
+    supabase.from('profiles').select('*'),
+    supabase.auth.getUser(),
+  ])
 
   if (error || !task) {
     notFound()
   }
-
-  const { data: comments } = await supabase
-    .from('comments')
-    .select(`
-      *,
-      user:profiles(*)
-    `)
-    .eq('task_id', id)
-    .order('created_at', { ascending: true })
-
-  const { data: attachments } = await supabase
-    .from('attachments')
-    .select(`
-      *,
-      user:profiles(*)
-    `)
-    .eq('task_id', id)
-    .order('created_at', { ascending: false })
-
-  const { data: activities } = await supabase
-    .from('activity_log')
-    .select(`
-      *,
-      user:profiles(*)
-    `)
-    .eq('task_id', id)
-    .order('created_at', { ascending: false })
-    .limit(20)
-
-  const { data: profiles } = await supabase.from('profiles').select('*')
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   return (
     <TaskDetail

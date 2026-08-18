@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TaskWithAssignee } from '@/types/database'
 import {
   format,
@@ -8,37 +8,74 @@ import {
   endOfMonth,
   eachDayOfInterval,
   isSameMonth,
-  isSameDay,
   addMonths,
   subMonths,
   startOfWeek,
   endOfWeek,
-  isToday
+  isToday,
 } from 'date-fns'
-import { ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import Link from 'next/link'
-import { parseLocalDate } from '@/lib/utils'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { cn, parseLocalDate } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { PRIORITIES, PRIORITY_META, STATUS_META } from '@/lib/task-meta'
 
 interface CalendarViewProps {
   tasks: TaskWithAssignee[]
   compact?: boolean
 }
 
-const priorityColors = {
-  urgent: 'bg-gradient-to-r from-red-500 to-red-600',
-  normal: 'bg-gradient-to-r from-amber-500 to-amber-600',
-  rainy_day: 'bg-gradient-to-r from-slate-400 to-slate-500',
-}
-
-const priorityDots = {
-  urgent: 'bg-red-500',
-  normal: 'bg-amber-500',
-  rainy_day: 'bg-slate-400',
+function DayTaskList({ day, dayTasks }: { day: Date; dayTasks: TaskWithAssignee[] }) {
+  return (
+    <>
+      <div className="px-4 py-3 border-b">
+        <h3 className="font-medium text-sm">{format(day, 'EEEE, MMMM d')}</h3>
+        <p className="text-muted-foreground text-xs mt-0.5">
+          {dayTasks.length} task{dayTasks.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+      <div className="p-2 max-h-64 overflow-y-auto">
+        {dayTasks.map((task) => (
+          <Link
+            key={task.id}
+            href={`/dashboard/tasks/${task.id}`}
+            className="block p-2.5 rounded-md hover:bg-muted transition-colors group"
+          >
+            <div className="flex items-start gap-2">
+              <span
+                className={cn(
+                  'size-2 rounded-full mt-1.5 shrink-0',
+                  PRIORITY_META[task.priority].dotClass
+                )}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                  {task.title}
+                </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <span
+                    className={cn(
+                      'text-xs px-1.5 py-0.5 rounded-sm font-medium',
+                      STATUS_META[task.status].badgeClass
+                    )}
+                  >
+                    {STATUS_META[task.status].label}
+                  </span>
+                  {task.time_estimate && (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {task.time_estimate}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </>
+  )
 }
 
 export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
@@ -49,100 +86,113 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
   const calendarStart = startOfWeek(monthStart)
   const calendarEnd = endOfWeek(monthEnd)
 
-  const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
+  const days = useMemo(
+    () => eachDayOfInterval({ start: calendarStart, end: calendarEnd }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [calendarStart.getTime(), calendarEnd.getTime()]
+  )
 
-  const getTasksForDay = (day: Date) => {
-    return tasks.filter((task) => {
-      if (!task.due_date) return false
-      return isSameDay(parseLocalDate(task.due_date), day)
-    })
-  }
+  // Bucket tasks by due date once instead of scanning the list per cell
+  const tasksByDay = useMemo(() => {
+    const map = new Map<string, TaskWithAssignee[]>()
+    for (const task of tasks) {
+      if (!task.due_date) continue
+      const key = format(parseLocalDate(task.due_date), 'yyyy-MM-dd')
+      const bucket = map.get(key)
+      if (bucket) bucket.push(task)
+      else map.set(key, [task])
+    }
+    return map
+  }, [tasks])
 
   return (
-    <div className="bg-gradient-to-br from-white to-slate-50/30 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] border border-slate-200/60 overflow-hidden">
+    <div className="bg-card rounded-lg border overflow-hidden">
       {/* Header */}
-      <div className={`bg-gradient-to-r from-[#00467F] via-[#0d5a9e] to-[#1669C9] ${compact ? 'px-4 py-3' : 'px-6 py-5'}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {!compact && (
-              <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-white" />
-              </div>
-            )}
-            <h2 className={`font-semibold text-white ${compact ? 'text-base' : 'text-xl tracking-tight'}`}>
-              {format(currentMonth, compact ? 'MMM yyyy' : 'MMMM yyyy')}
-            </h2>
-          </div>
-          <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm rounded-xl p-1">
-            <button
-              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className={`text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200 ${compact ? 'h-7 w-7' : 'h-8 w-8'} flex items-center justify-center`}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {!compact && (
-              <button
-                onClick={() => setCurrentMonth(new Date())}
-                className="text-white/90 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200 text-xs font-medium px-3 py-1.5"
-              >
-                Today
-              </button>
-            )}
-            <button
-              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className={`text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200 ${compact ? 'h-7 w-7' : 'h-8 w-8'} flex items-center justify-center`}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+      <div className={cn('flex items-center justify-between border-b', compact ? 'px-3 py-2' : 'px-4 py-3')}>
+        <h2 className={cn('font-medium', compact ? 'text-sm' : 'text-base')}>
+          {format(currentMonth, compact ? 'MMM yyyy' : 'MMMM yyyy')}
+        </h2>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+          {!compact && (
+            <Button variant="ghost" size="sm" onClick={() => setCurrentMonth(new Date())}>
+              Today
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            aria-label="Next month"
+          >
+            <ChevronRight className="size-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Days of week header */}
-      <div className="grid grid-cols-7 bg-gradient-to-b from-slate-50 to-slate-50/50 border-b border-slate-100">
-        {(compact ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']).map((day, i) => (
+      {/* Days of week */}
+      <div className="grid grid-cols-7 border-b bg-muted/50">
+        {(compact
+          ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+          : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+        ).map((day, i) => (
           <div
             key={i}
-            className={`text-center text-[10px] font-semibold text-slate-400 uppercase tracking-widest ${compact ? 'py-2.5' : 'py-3'}`}
+            className={cn(
+              'text-center text-xs font-medium text-muted-foreground',
+              compact ? 'py-2' : 'py-2.5'
+            )}
           >
             {day}
           </div>
         ))}
       </div>
 
-      {/* Calendar grid */}
+      {/* Grid */}
       <div className="grid grid-cols-7">
         {days.map((day, idx) => {
-          const dayTasks = getTasksForDay(day)
+          const dayTasks = tasksByDay.get(format(day, 'yyyy-MM-dd')) || []
           const isCurrentMonth = isSameMonth(day, currentMonth)
           const isCurrentDay = isToday(day)
-          const hasUrgent = dayTasks.some((t) => t.priority === 'urgent')
-          const hasNormal = dayTasks.some((t) => t.priority === 'normal')
-          const hasRainyDay = dayTasks.some((t) => t.priority === 'rainy_day')
 
           if (compact) {
+            const presentPriorities = PRIORITIES.filter((p) =>
+              dayTasks.some((t) => t.priority === p.value)
+            )
+
             const cellContent = (
               <div
-                className={`h-12 border-b border-r border-slate-100/80 flex flex-col items-center justify-center relative transition-all duration-200 ${
-                  !isCurrentMonth ? 'bg-slate-50/30' : 'bg-white hover:bg-blue-50/30'
-                } ${idx % 7 === 6 ? 'border-r-0' : ''} ${dayTasks.length > 0 ? 'cursor-pointer' : ''}`}
+                className={cn(
+                  'h-12 border-b border-r flex flex-col items-center justify-center transition-colors',
+                  idx % 7 === 6 && 'border-r-0',
+                  !isCurrentMonth && 'bg-muted/30',
+                  dayTasks.length > 0 && 'cursor-pointer hover:bg-muted/50'
+                )}
               >
                 <span
-                  className={`text-xs flex items-center justify-center w-7 h-7 rounded-full font-medium transition-all duration-200 ${
+                  className={cn(
+                    'text-xs flex items-center justify-center size-6 rounded-full font-medium',
                     isCurrentDay
-                      ? 'bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white shadow-md ring-2 ring-blue-200'
+                      ? 'bg-primary text-primary-foreground'
                       : !isCurrentMonth
-                      ? 'text-slate-300'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
+                        ? 'text-muted-foreground/40'
+                        : 'text-foreground'
+                  )}
                 >
                   {format(day, 'd')}
                 </span>
                 {dayTasks.length > 0 && (
-                  <div className="flex gap-0.5 mt-1">
-                    {hasUrgent && <span className="w-1.5 h-1.5 rounded-full bg-red-500 ring-1 ring-red-200" />}
-                    {hasNormal && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 ring-1 ring-amber-200" />}
-                    {hasRainyDay && <span className="w-1.5 h-1.5 rounded-full bg-slate-400 ring-1 ring-slate-200" />}
+                  <div className="flex gap-0.5 mt-0.5">
+                    {presentPriorities.map((p) => (
+                      <span key={p.value} className={cn('size-1.5 rounded-full', p.dotClass)} />
+                    ))}
                   </div>
                 )}
               </div>
@@ -151,142 +201,66 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
             if (dayTasks.length > 0) {
               return (
                 <Popover key={idx}>
-                  <PopoverTrigger asChild>
-                    {cellContent}
-                  </PopoverTrigger>
+                  <PopoverTrigger asChild>{cellContent}</PopoverTrigger>
                   <PopoverContent className="w-72 p-0" align="center">
-                    <div className="bg-gradient-to-r from-[#00467F] to-[#1669C9] px-4 py-3 rounded-t-md">
-                      <h3 className="font-semibold text-white text-sm">
-                        {format(day, 'EEEE, MMMM d')}
-                      </h3>
-                      <p className="text-white/70 text-xs mt-0.5">
-                        {dayTasks.length} task{dayTasks.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <div className="p-2 max-h-64 overflow-y-auto">
-                      {dayTasks.map((task) => (
-                        <Link
-                          key={task.id}
-                          href={`/dashboard/tasks/${task.id}`}
-                          className="block p-2.5 rounded-lg hover:bg-slate-50 transition-colors group"
-                        >
-                          <div className="flex items-start gap-2">
-                            <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priorityDots[task.priority]}`} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-800 truncate group-hover:text-[#1669C9] transition-colors">
-                                {task.title}
-                              </p>
-                              <div className="flex items-center gap-3 mt-1">
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                  task.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
-                                  task.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
-                                  'bg-slate-100 text-slate-600'
-                                }`}>
-                                  {task.status === 'not_started' ? 'Not Started' :
-                                   task.status === 'in_progress' ? 'In Progress' : 'Completed'}
-                                </span>
-                                {task.time_estimate && (
-                                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {task.time_estimate}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
+                    <DayTaskList day={day} dayTasks={dayTasks} />
                   </PopoverContent>
                 </Popover>
               )
             }
-
             return <div key={idx}>{cellContent}</div>
           }
 
           return (
             <div
               key={idx}
-              className={`min-h-[115px] border-b border-r border-slate-100/80 p-2 transition-all duration-200 ${
-                !isCurrentMonth ? 'bg-slate-50/30' : 'bg-white hover:bg-blue-50/20'
-              } ${idx % 7 === 6 ? 'border-r-0' : ''} ${isCurrentDay ? 'bg-blue-50/30' : ''}`}
+              className={cn(
+                'min-h-[96px] sm:min-h-[115px] border-b border-r p-1.5 sm:p-2 transition-colors',
+                idx % 7 === 6 && 'border-r-0',
+                !isCurrentMonth && 'bg-muted/30',
+                isCurrentDay && 'bg-accent/50'
+              )}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span
-                  className={`text-sm w-8 h-8 flex items-center justify-center rounded-full font-semibold transition-all duration-200 ${
-                    isCurrentDay
-                      ? 'bg-gradient-to-br from-[#00467F] to-[#1669C9] text-white shadow-md ring-2 ring-blue-200'
-                      : !isCurrentMonth
-                      ? 'text-slate-300'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {format(day, 'd')}
-                </span>
-              </div>
+              <span
+                className={cn(
+                  'text-xs sm:text-sm size-6 sm:size-7 flex items-center justify-center rounded-full font-medium mb-1',
+                  isCurrentDay
+                    ? 'bg-primary text-primary-foreground'
+                    : !isCurrentMonth
+                      ? 'text-muted-foreground/40'
+                      : 'text-foreground'
+                )}
+              >
+                {format(day, 'd')}
+              </span>
               <div className="space-y-1">
                 {dayTasks.slice(0, 3).map((task) => (
                   <Link
                     key={task.id}
                     href={`/dashboard/tasks/${task.id}`}
-                    className={`block text-[11px] px-2 py-1.5 rounded-lg truncate text-white font-medium shadow-sm ${
-                      priorityColors[task.priority]
-                    } hover:shadow-md hover:translate-x-0.5 transition-all duration-200`}
+                    className={cn(
+                      'flex items-center gap-1.5 text-xs px-1.5 py-1 rounded-sm truncate transition-colors hover:bg-muted',
+                      task.status === 'completed' && 'opacity-50 line-through'
+                    )}
                   >
-                    {task.title}
+                    <span
+                      className={cn(
+                        'size-1.5 rounded-full shrink-0',
+                        PRIORITY_META[task.priority].dotClass
+                      )}
+                    />
+                    <span className="truncate">{task.title}</span>
                   </Link>
                 ))}
                 {dayTasks.length > 3 && (
                   <Popover>
                     <PopoverTrigger asChild>
-                      <span className="block text-[10px] text-slate-400 font-semibold px-2 py-1 hover:text-slate-600 cursor-pointer transition-colors">
+                      <button className="block text-xs text-muted-foreground px-1.5 py-0.5 hover:text-foreground transition-colors">
                         +{dayTasks.length - 3} more
-                      </span>
+                      </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-72 p-0" align="start">
-                      <div className="bg-gradient-to-r from-[#00467F] to-[#1669C9] px-4 py-3 rounded-t-md">
-                        <h3 className="font-semibold text-white text-sm">
-                          {format(day, 'EEEE, MMMM d')}
-                        </h3>
-                        <p className="text-white/70 text-xs mt-0.5">
-                          {dayTasks.length} task{dayTasks.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <div className="p-2 max-h-64 overflow-y-auto">
-                        {dayTasks.map((task) => (
-                          <Link
-                            key={task.id}
-                            href={`/dashboard/tasks/${task.id}`}
-                            className="block p-2.5 rounded-lg hover:bg-slate-50 transition-colors group"
-                          >
-                            <div className="flex items-start gap-2">
-                              <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${priorityDots[task.priority]}`} />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-800 truncate group-hover:text-[#1669C9] transition-colors">
-                                  {task.title}
-                                </p>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                    task.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
-                                    task.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
-                                    'bg-slate-100 text-slate-600'
-                                  }`}>
-                                    {task.status === 'not_started' ? 'Not Started' :
-                                     task.status === 'in_progress' ? 'In Progress' : 'Completed'}
-                                  </span>
-                                  {task.time_estimate && (
-                                    <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
-                                      {task.time_estimate}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
+                      <DayTaskList day={day} dayTasks={dayTasks} />
                     </PopoverContent>
                   </Popover>
                 )}
@@ -296,22 +270,15 @@ export function CalendarView({ tasks, compact = false }: CalendarViewProps) {
         })}
       </div>
 
-      {/* Legend - only show in non-compact mode */}
+      {/* Legend */}
       {!compact && (
-        <div className="px-5 py-3.5 border-t border-slate-100/80 bg-gradient-to-b from-slate-50/50 to-white flex items-center gap-6 text-xs">
-          <span className="text-slate-400 font-semibold uppercase tracking-widest text-[10px]">Priority</span>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-gradient-to-br from-red-500 to-rose-500 ring-2 ring-red-100" />
-            <span className="text-slate-600 font-medium">Urgent</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 ring-2 ring-amber-100" />
-            <span className="text-slate-600 font-medium">Normal</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-gradient-to-br from-slate-400 to-slate-500 ring-2 ring-slate-100" />
-            <span className="text-slate-600 font-medium">Rainy Day</span>
-          </div>
+        <div className="px-4 py-2.5 border-t bg-muted/30 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {PRIORITIES.map((p) => (
+            <div key={p.value} className="flex items-center gap-1.5">
+              <span className={cn('size-2 rounded-full', p.dotClass)} />
+              <span>{p.label}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
