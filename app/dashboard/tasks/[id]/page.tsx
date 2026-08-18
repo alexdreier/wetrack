@@ -12,6 +12,7 @@ export default async function TaskPage({ params }: TaskPageProps) {
 
   const [
     { data: task, error },
+    { data: subtasks },
     { data: comments },
     { data: attachments },
     { data: activities },
@@ -31,6 +32,17 @@ export default async function TaskPage({ params }: TaskPageProps) {
       )
       .eq('id', id)
       .single(),
+    supabase
+      .from('tasks')
+      .select(
+        `
+        *,
+        assignee:profiles!tasks_assigned_to_fkey(*),
+        creator:profiles!tasks_created_by_fkey(*)
+      `
+      )
+      .eq('parent_id', id)
+      .order('created_at', { ascending: true }),
     supabase
       .from('comments')
       .select(`*, user:profiles(*)`)
@@ -55,9 +67,22 @@ export default async function TaskPage({ params }: TaskPageProps) {
     notFound()
   }
 
+  // Breadcrumb for subtasks; a second tiny query only when needed
+  let parent: { id: string; title: string } | null = null
+  if (task.parent_id) {
+    const { data: parentRow } = await supabase
+      .from('tasks')
+      .select('id, title')
+      .eq('id', task.parent_id)
+      .single()
+    parent = parentRow
+  }
+
   return (
     <TaskDetail
       task={task}
+      subtasks={subtasks || []}
+      parent={parent}
       comments={comments || []}
       attachments={attachments || []}
       activities={activities || []}

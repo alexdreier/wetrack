@@ -35,6 +35,7 @@ export type Task = {
   due_date: string | null
   assigned_to: string | null
   created_by: string
+  parent_id: string | null
   created_at: string
   updated_at: string
 }
@@ -88,12 +89,13 @@ export type Database = {
       }
       tasks: {
         Row: Task
-        Insert: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'position'> & {
+        Insert: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'position' | 'parent_id'> & {
           id?: string
           created_at?: string
           updated_at?: string
           // Defaulted by the tasks_set_position trigger (top of the list)
           position?: number | null
+          parent_id?: string | null
         }
         Update: Partial<Omit<Task, 'id' | 'created_at'>>
         Relationships: [

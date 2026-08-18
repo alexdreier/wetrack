@@ -19,6 +19,7 @@ export type ActivityWithUser = ActivityLog & { user: Profile }
 
 type UseTaskDetailArgs = {
   initialTask: TaskWithAssignee
+  initialSubtasks: TaskWithAssignee[]
   initialComments: CommentWithUser[]
   initialAttachments: AttachmentWithUser[]
   initialActivities: ActivityWithUser[]
@@ -38,12 +39,14 @@ function upsertById<T extends { id: string }>(list: T[], row: T, position: 'star
 // profile list) and mutations apply optimistically with rollback.
 export function useTaskDetail({
   initialTask,
+  initialSubtasks,
   initialComments,
   initialAttachments,
   initialActivities,
   profiles,
 }: UseTaskDetailArgs) {
   const [task, setTask] = useState(initialTask)
+  const [subtasks, setSubtasks] = useState(initialSubtasks)
   const [comments, setComments] = useState(initialComments)
   const [attachments, setAttachments] = useState(initialAttachments)
   const [activities, setActivities] = useState(initialActivities)
@@ -81,6 +84,19 @@ export function useTaskDetail({
             return
           }
           setTask(joinTask(payload.new as Task))
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks', filter: `parent_id=eq.${initialTask.id}` },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            const oldId = (payload.old as { id?: string }).id
+            if (oldId) setSubtasks((prev) => prev.filter((t) => t.id !== oldId))
+          } else {
+            const row = joinTask(payload.new as Task)
+            setSubtasks((prev) => upsertById(prev, row, 'end'))
+          }
         }
       )
       .on(
@@ -163,6 +179,48 @@ export function useTaskDetail({
     return true
   }, [initialTask.id])
 
+  const addSubtask = useCallback(
+    (row: Task) => setSubtasks((prev) => upsertById(prev, joinTask(row), 'end')),
+    [joinTask]
+  )
+
+  const updateSubtask = useCallback(
+    async (id: string, patch: Partial<Task>) => {
+      let snapshot: TaskWithAssignee[] = []
+      setSubtasks((prev) => {
+        snapshot = prev
+        return prev.map((t) =>
+          t.id === id ? joinTask({ ...t, ...patch, updated_at: new Date().toISOString() }) : t
+        )
+      })
+      const supabase = createClient()
+      const { error } = await supabase.from('tasks').update(patch).eq('id', id)
+      if (error) {
+        setSubtasks(snapshot)
+        toast.error('Failed to update subtask')
+        return false
+      }
+      return true
+    },
+    [joinTask]
+  )
+
+  const removeSubtask = useCallback(async (id: string) => {
+    let snapshot: TaskWithAssignee[] = []
+    setSubtasks((prev) => {
+      snapshot = prev
+      return prev.filter((t) => t.id !== id)
+    })
+    const supabase = createClient()
+    const { error } = await supabase.from('tasks').delete().eq('id', id)
+    if (error) {
+      setSubtasks(snapshot)
+      toast.error('Failed to delete subtask')
+      return false
+    }
+    return true
+  }, [])
+
   // Local upserts for the current user's own writes — instant feedback,
   // and the realtime echo reconciles by id without duplicating.
   const addComment = useCallback(
@@ -184,11 +242,15 @@ export function useTaskDetail({
 
   return {
     task,
+    subtasks,
     comments,
     attachments,
     activities,
     updateTask,
     deleteTask,
+    addSubtask,
+    updateSubtask,
+    removeSubtask,
     addComment,
     removeComment,
     addAttachment,

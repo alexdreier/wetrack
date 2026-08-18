@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Calendar, Clock, MessageSquare, Paperclip, Edit, ChevronRight } from 'lucide-react'
+import { Calendar, Clock, ListTree, MessageSquare, Paperclip, Edit, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { RichTextDisplay } from './RichTextDisplay'
 import { cn, parseLocalDate, getInitials, stripHtml } from '@/lib/utils'
@@ -43,13 +43,14 @@ interface TaskCardProps {
 }
 
 function TaskCardInner({ task, className, dragHandle }: TaskCardProps) {
-  const { profiles, currentUserId, updateTask } = useTasks()
+  const { profiles, currentUserId, updateTask, subtaskCounts } = useTasks()
   const currentUserProfile = profiles.find((p) => p.id === currentUserId)
   const showThingsButton = currentUserProfile?.things_integration ?? false
 
   const priority = PRIORITY_META[task.priority]
   const status = STATUS_META[task.status]
   const isCompleted = task.status === 'completed'
+  const subtasks = subtaskCounts.get(task.id)
 
   function sendToThings() {
     const params: string[] = [`title=${encodeURIComponent(task.title)}`]
@@ -146,7 +147,7 @@ function TaskCardInner({ task, className, dragHandle }: TaskCardProps) {
         </div>
 
         {/* Meta row */}
-        {(task.due_date || task.time_estimate) && (
+        {(task.due_date || task.time_estimate || subtasks) && (
           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
             {task.due_date && (
               <span className="inline-flex items-center gap-1.5">
@@ -158,6 +159,15 @@ function TaskCardInner({ task, className, dragHandle }: TaskCardProps) {
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="size-3.5" />
                 {task.time_estimate}
+              </span>
+            )}
+            {subtasks && (
+              <span
+                className="inline-flex items-center gap-1.5"
+                title={`${subtasks.done} of ${subtasks.total} subtasks done`}
+              >
+                <ListTree className="size-3.5" />
+                {subtasks.done}/{subtasks.total}
               </span>
             )}
           </div>
