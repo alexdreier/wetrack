@@ -20,7 +20,8 @@ export type SortKey = 'manual' | 'updated' | 'created' | 'due_date' | 'lead' | '
 
 export type TaskFiltersState = {
   search: string
-  status: 'all' | TaskStatus
+  // 'open' = everything not completed (the default, matching task-app norms)
+  status: 'open' | 'all' | TaskStatus
   priority: 'all' | Priority
   assignee: 'all' | 'mine' | 'unassigned'
   sort: SortKey
@@ -28,7 +29,7 @@ export type TaskFiltersState = {
 
 const DEFAULT_FILTERS: TaskFiltersState = {
   search: '',
-  status: 'all',
+  status: 'open',
   priority: 'all',
   assignee: 'all',
   sort: 'manual',
@@ -162,7 +163,7 @@ export function TasksProvider({
 
   const hasActiveFilters =
     filters.search !== '' ||
-    filters.status !== 'all' ||
+    filters.status !== DEFAULT_FILTERS.status ||
     filters.priority !== 'all' ||
     filters.assignee !== 'all'
 
@@ -226,7 +227,9 @@ export function TasksProvider({
       ) {
         return false
       }
-      if (filters.status !== 'all' && task.status !== filters.status) return false
+      if (filters.status === 'open' && task.status === 'completed') return false
+      if (filters.status !== 'open' && filters.status !== 'all' && task.status !== filters.status)
+        return false
       if (filters.priority !== 'all' && task.priority !== filters.priority) return false
       if (filters.assignee === 'mine' && task.assigned_to !== currentUserId) return false
       if (filters.assignee === 'unassigned' && task.assigned_to !== null) return false

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Calendar, Clock, MessageSquare, Paperclip, Edit, ChevronRight } from 'lucide-react'
+import { toast } from 'sonner'
 import { RichTextDisplay } from './RichTextDisplay'
 import { cn, parseLocalDate, getInitials, stripHtml } from '@/lib/utils'
 import { PRIORITY_META, STATUS_META, STATUSES } from '@/lib/task-meta'
@@ -68,8 +69,18 @@ function TaskCardInner({ task, className, dragHandle }: TaskCardProps) {
   }
 
   async function updateStatus(newStatus: TaskStatus) {
+    const previous = task.status
     const ok = await updateTask(task.id, { status: newStatus })
     if (ok) {
+      // Completed tasks leave the default (Open) view, so confirm and offer undo
+      if (newStatus === 'completed' && previous !== 'completed') {
+        toast.success('Task completed', {
+          action: {
+            label: 'Undo',
+            onClick: () => updateTask(task.id, { status: previous }),
+          },
+        })
+      }
       fetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

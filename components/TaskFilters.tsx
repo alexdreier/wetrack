@@ -76,12 +76,15 @@ export function TaskFilters() {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
+          <SelectItem value="open">
+            Open ({statusCounts.not_started + statusCounts.in_progress})
+          </SelectItem>
           {STATUSES.map((s) => (
             <SelectItem key={s.value} value={s.value}>
               {s.label} ({statusCounts[s.value]})
             </SelectItem>
           ))}
+          <SelectItem value="all">All statuses</SelectItem>
         </SelectContent>
       </Select>
 
