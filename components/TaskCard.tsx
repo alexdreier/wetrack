@@ -95,14 +95,11 @@ function TaskCardInner({ task }: TaskCardProps) {
   return (
     <div
       className={cn(
-        'group relative bg-card rounded-lg border transition-colors hover:border-muted-foreground/30 overflow-hidden',
+        'group bg-card rounded-lg border transition-colors hover:border-muted-foreground/30',
         isCompleted && 'opacity-60'
       )}
     >
-      {/* Priority accent */}
-      <div className={cn('absolute left-0 top-0 bottom-0 w-1', priority.accentClass)} />
-
-      <div className="p-4 pl-5 sm:p-5 sm:pl-6">
+      <div className="p-4 sm:p-5">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
