@@ -30,6 +30,7 @@ export type Task = {
   priority: Priority
   status: TaskStatus
   time_estimate: string | null
+  position: number | null
   start_date: string | null
   due_date: string | null
   assigned_to: string | null
@@ -87,10 +88,12 @@ export type Database = {
       }
       tasks: {
         Row: Task
-        Insert: Omit<Task, 'id' | 'created_at' | 'updated_at'> & {
+        Insert: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'position'> & {
           id?: string
           created_at?: string
           updated_at?: string
+          // Defaulted by the tasks_set_position trigger (top of the list)
+          position?: number | null
         }
         Update: Partial<Omit<Task, 'id' | 'created_at'>>
         Relationships: [

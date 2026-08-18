@@ -31,6 +31,7 @@ CREATE TABLE tasks (
   priority priority_level DEFAULT 'normal',
   status task_status DEFAULT 'not_started',
   time_estimate TEXT,
+  position DOUBLE PRECISION,
   start_date DATE,
   due_date DATE,
   assigned_to UUID REFERENCES profiles(id) ON DELETE SET NULL,
@@ -78,6 +79,7 @@ CREATE INDEX idx_tasks_priority ON tasks(priority);
 CREATE INDEX idx_tasks_due_date ON tasks(due_date);
 CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);
 CREATE INDEX idx_tasks_updated_at ON tasks(updated_at DESC);
+CREATE INDEX idx_tasks_position ON tasks(position);
 CREATE INDEX idx_comments_task_id ON comments(task_id);
 CREATE INDEX idx_comments_task_created ON comments(task_id, created_at);
 CREATE INDEX idx_attachments_task_id ON attachments(task_id);
@@ -98,6 +100,22 @@ CREATE TRIGGER tasks_updated_at
   BEFORE UPDATE ON tasks
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at();
+
+-- New tasks land at the top of the manual order unless a position is given
+CREATE OR REPLACE FUNCTION set_task_position()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.position IS NULL THEN
+    SELECT COALESCE(MIN(position), 1024) - 1024 INTO NEW.position FROM tasks;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tasks_set_position
+  BEFORE INSERT ON tasks
+  FOR EACH ROW
+  EXECUTE FUNCTION set_task_position();
 
 -- Function to create profile on user signup
 CREATE OR REPLACE FUNCTION handle_new_user()

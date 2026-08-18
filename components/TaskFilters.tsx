@@ -15,6 +15,7 @@ import { useTasks, TaskFiltersState, SortKey } from './TasksProvider'
 import { PRIORITIES, STATUSES } from '@/lib/task-meta'
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'manual', label: 'My order' },
   { value: 'updated', label: 'Last updated' },
   { value: 'created', label: 'Newest' },
   { value: 'due_date', label: 'Due date' },

@@ -37,9 +37,11 @@ function ThingsIcon({ className }: { className?: string }) {
 
 interface TaskCardProps {
   task: TaskWithAssignee
+  className?: string
+  dragHandle?: React.ReactNode
 }
 
-function TaskCardInner({ task }: TaskCardProps) {
+function TaskCardInner({ task, className, dragHandle }: TaskCardProps) {
   const { profiles, currentUserId, updateTask } = useTasks()
   const currentUserProfile = profiles.find((p) => p.id === currentUserId)
   const showThingsButton = currentUserProfile?.things_integration ?? false
@@ -95,11 +97,13 @@ function TaskCardInner({ task }: TaskCardProps) {
   return (
     <div
       className={cn(
-        'group bg-card rounded-lg border transition-colors hover:border-muted-foreground/30',
-        isCompleted && 'opacity-60'
+        'group bg-card rounded-lg border transition-colors hover:border-muted-foreground/30 flex',
+        isCompleted && 'opacity-60',
+        className
       )}
     >
-      <div className="p-4 sm:p-5">
+      {dragHandle}
+      <div className="flex-1 min-w-0 p-4 sm:p-5">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
