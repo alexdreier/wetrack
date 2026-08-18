@@ -18,3 +18,28 @@ export function parseLocalDate(dateString: string): Date {
   // Otherwise, parse normally (for timestamps with time component)
   return new Date(dateString)
 }
+
+/** Initials for avatar fallbacks: "Alex Dreier" → "AD", else first char of fallback. */
+export function getInitials(fullName?: string | null, fallback?: string | null): string {
+  if (fullName) {
+    return fullName
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+  }
+  return fallback?.[0]?.toUpperCase() || '?'
+}
+
+/** Strip HTML tags and decode common entities (for plain-text contexts). */
+export function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .trim()
+}

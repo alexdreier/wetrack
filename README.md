@@ -13,10 +13,10 @@ A collaborative task management web app for teams with real-time sync, comments,
 
 ## Tech Stack
 
-- **Next.js 14** - React framework with App Router
+- **Next.js 16** - React framework with App Router (React 19)
 - **Supabase** - Database, auth, real-time, and file storage
-- **Tailwind CSS + shadcn/ui** - Modern, accessible UI components
-- **TypeScript** - Type-safe development
+- **Tailwind CSS v4 + shadcn/ui** - Token-based design system with dark mode
+- **TypeScript** - Type-safe development end to end
 
 ## Setup
 
@@ -30,6 +30,11 @@ A collaborative task management web app for teams with real-time sync, comments,
 1. In your Supabase dashboard, go to **SQL Editor**
 2. Copy the contents of `supabase/schema.sql` and run it
 3. Copy the contents of `supabase/storage.sql` and run it
+
+For an **existing** database created from an older schema, run
+`supabase/migration-2026-08-modernization.sql` instead — it is idempotent and
+brings the enum values, profile columns, indexes, and realtime publication up
+to date.
 
 ### 3. Configure Environment Variables
 

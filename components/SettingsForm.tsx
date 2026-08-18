@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Camera } from 'lucide-react'
 import { toast } from 'sonner'
+import { getInitials } from '@/lib/utils'
 
 interface SettingsFormProps {
   profile: Profile | null
@@ -43,13 +44,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
     confirm: '',
   })
 
-  const initials = formData.full_name
-    ? formData.full_name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-    : userEmail[0].toUpperCase()
+  const initials = getInitials(formData.full_name, userEmail)
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -162,9 +157,9 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
             {/* Avatar Section */}
             <div className="flex items-center gap-6">
               <div className="relative">
-                <Avatar className="h-24 w-24 border-4 border-[#00467F]/10">
+                <Avatar className="size-24 border">
                   <AvatarImage src={avatarUrl} alt={formData.full_name} className="object-contain" />
-                  <AvatarFallback className="text-2xl bg-[#00467F] text-white font-bold">
+                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-medium">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -172,7 +167,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="absolute bottom-0 right-0 w-8 h-8 bg-[#54B948] rounded-full flex items-center justify-center text-white hover:bg-[#54B948]/90 transition-colors shadow-lg"
+                  className="absolute bottom-0 right-0 size-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors border-2 border-card"
                 >
                   <Camera className="h-4 w-4" />
                 </button>
@@ -185,10 +180,10 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
                 />
               </div>
               <div>
-                <p className="font-medium text-[#3C3675]">{formData.full_name || 'Your Name'}</p>
-                <p className="text-sm text-slate-500">{userEmail}</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  {uploading ? 'Uploading...' : 'Click the camera icon to change your photo'}
+                <p className="font-medium">{formData.full_name || 'Your Name'}</p>
+                <p className="text-sm text-muted-foreground">{userEmail}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {uploading ? 'Uploading\u2026' : 'Click the camera icon to change your photo'}
                 </p>
               </div>
             </div>
@@ -210,14 +205,14 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
                 id="email"
                 value={userEmail}
                 disabled
-                className="bg-slate-50"
+                className="bg-muted"
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Email cannot be changed
               </p>
             </div>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Changes'}
+              {loading ? 'Saving\u2026' : 'Save Changes'}
             </Button>
           </form>
         </CardContent>
@@ -232,7 +227,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="email_notifications">Enable Email Notifications</Label>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Master toggle for all email notifications
               </p>
             </div>
@@ -251,7 +246,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="notify_on_assignment">Task Assignments</Label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   When a task is assigned to you
                 </p>
               </div>
@@ -268,7 +263,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="notify_on_comments">Comments</Label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   When someone comments on your tasks
                 </p>
               </div>
@@ -285,7 +280,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="notify_on_status_change">Status Changes</Label>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   When task status is updated
                 </p>
               </div>
@@ -303,7 +298,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
           <Separator />
 
           <Button onClick={handleProfileUpdate} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Notification Preferences'}
+            {loading ? 'Saving\u2026' : 'Save Notification Preferences'}
           </Button>
         </CardContent>
       </Card>
@@ -317,8 +312,8 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="things_integration">Things 3 Integration</Label>
-              <p className="text-sm text-slate-500">
-                Show "Send to Things" button on tasks (requires Things app)
+              <p className="text-sm text-muted-foreground">
+                Show &ldquo;Send to Things&rdquo; button on tasks (requires Things app)
               </p>
             </div>
             <Switch
@@ -331,7 +326,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
           </div>
 
           <Button onClick={handleProfileUpdate} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Integration Settings'}
+            {loading ? 'Saving\u2026' : 'Save Integration Settings'}
           </Button>
         </CardContent>
       </Card>
@@ -364,7 +359,7 @@ export function SettingsForm({ profile, userId, userEmail }: SettingsFormProps) 
               />
             </div>
             <Button type="submit" disabled={loading || !passwordData.new || !passwordData.confirm}>
-              {loading ? 'Updating...' : 'Update Password'}
+              {loading ? 'Updating\u2026' : 'Update Password'}
             </Button>
           </form>
         </CardContent>

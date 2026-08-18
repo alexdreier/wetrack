@@ -1,7 +1,8 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRef } from 'react'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -9,125 +10,121 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, ArrowUpDown, User } from 'lucide-react'
+import { Search, X } from 'lucide-react'
+import { useTasks, TaskFiltersState, SortKey } from './TasksProvider'
+import { PRIORITIES, STATUSES } from '@/lib/task-meta'
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'updated', label: 'Last updated' },
+  { value: 'created', label: 'Newest' },
+  { value: 'due_date', label: 'Due date' },
+  { value: 'lead', label: 'Lead' },
+  { value: 'priority', label: 'Priority' },
+]
 
 export function TaskFilters() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-
-  function updateFilter(key: string, value: string) {
-    const params = new URLSearchParams(searchParams.toString())
-    if (value && value !== 'all') {
-      params.set(key, value)
-    } else {
-      params.delete(key)
-    }
-    router.push(`/dashboard?${params.toString()}`)
-  }
+  const {
+    filters,
+    setFilter,
+    clearFilters,
+    hasActiveFilters,
+    statusCounts,
+    priorityCounts,
+  } = useTasks()
+  const searchRef = useRef<HTMLInputElement>(null)
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+    <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input
+          ref={searchRef}
+          data-search-input
           placeholder="Search tasks..."
-          className="pl-9"
-          defaultValue={searchParams.get('search') || ''}
-          onChange={(e) => updateFilter('search', e.target.value)}
+          value={filters.search}
+          onChange={(e) => setFilter('search', e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setFilter('search', '')
+              e.currentTarget.blur()
+            }
+          }}
+          className="pl-8 h-8 w-full sm:w-[200px]"
         />
       </div>
+
       <Select
-        defaultValue={searchParams.get('assignee') || 'all'}
-        onValueChange={(value) => updateFilter('assignee', value)}
+        value={filters.assignee}
+        onValueChange={(v) => setFilter('assignee', v as TaskFiltersState['assignee'])}
       >
-        <SelectTrigger className="w-full sm:w-[140px]">
-          <div className="flex items-center gap-2">
-            <User className="h-3.5 w-3.5 text-slate-400" />
-            <SelectValue placeholder="Assignee" />
-          </div>
+        <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Assignee filter">
+          <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Tasks</SelectItem>
-          <SelectItem value="mine">My Tasks</SelectItem>
+          <SelectItem value="all">All tasks</SelectItem>
+          <SelectItem value="mine">My tasks</SelectItem>
           <SelectItem value="unassigned">Unassigned</SelectItem>
         </SelectContent>
       </Select>
+
       <Select
-        defaultValue={searchParams.get('status') || 'all'}
-        onValueChange={(value) => updateFilter('status', value)}
+        value={filters.status}
+        onValueChange={(v) => setFilter('status', v as TaskFiltersState['status'])}
       >
-        <SelectTrigger className="w-full sm:w-[160px]">
-          <SelectValue placeholder="Status" />
+        <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Status filter">
+          <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="not_started">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-slate-400" />
-              Not Started
-            </span>
-          </SelectItem>
-          <SelectItem value="in_progress">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
-              In Progress
-            </span>
-          </SelectItem>
-          <SelectItem value="completed">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
-              Completed
-            </span>
-          </SelectItem>
+          <SelectItem value="all">All statuses</SelectItem>
+          {STATUSES.map((s) => (
+            <SelectItem key={s.value} value={s.value}>
+              {s.label} ({statusCounts[s.value]})
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
+
       <Select
-        defaultValue={searchParams.get('priority') || 'all'}
-        onValueChange={(value) => updateFilter('priority', value)}
+        value={filters.priority}
+        onValueChange={(v) => setFilter('priority', v as TaskFiltersState['priority'])}
       >
-        <SelectTrigger className="w-full sm:w-[160px]">
-          <SelectValue placeholder="Priority" />
+        <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Priority filter">
+          <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Priority</SelectItem>
-          <SelectItem value="urgent">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-500" />
-              Urgent
-            </span>
-          </SelectItem>
-          <SelectItem value="normal">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500" />
-              Normal
-            </span>
-          </SelectItem>
-          <SelectItem value="rainy_day">
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-slate-400" />
-              Rainy Day
-            </span>
-          </SelectItem>
+          <SelectItem value="all">All priorities</SelectItem>
+          {PRIORITIES.map((p) => (
+            <SelectItem key={p.value} value={p.value}>
+              {p.label} ({priorityCounts[p.value]})
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
-      <Select
-        defaultValue={searchParams.get('sort') || 'updated'}
-        onValueChange={(value) => updateFilter('sort', value)}
-      >
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <div className="flex items-center gap-2">
-            <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
-            <SelectValue placeholder="Sort by" />
-          </div>
+
+      <Select value={filters.sort} onValueChange={(v) => setFilter('sort', v as SortKey)}>
+        <SelectTrigger size="sm" className="w-full sm:w-auto" aria-label="Sort order">
+          <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="updated">Recently Updated</SelectItem>
-          <SelectItem value="created">Recently Created</SelectItem>
-          <SelectItem value="due_date">Due Date</SelectItem>
-          <SelectItem value="lead">Lead (A-Z)</SelectItem>
-          <SelectItem value="priority">Priority</SelectItem>
+          {SORT_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
+
+      {hasActiveFilters && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearFilters}
+          className="text-muted-foreground gap-1.5"
+        >
+          <X className="size-3.5" />
+          Clear
+        </Button>
+      )}
     </div>
   )
 }

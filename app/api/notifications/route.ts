@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Profile, TaskWithAssignee } from '@/types/database'
 import {
@@ -9,16 +9,24 @@ import {
   statusChangedEmail,
 } from '@/lib/email'
 
+type EmailJob = { to: string; subject: string; html: string }
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { type, taskId, userId, data } = body
-
-    console.log('Notification request:', { type, taskId, userId, data })
-
     const supabase = await createClient()
 
-    // Get task details
+    // The actor is the authenticated user — never trusted from the body
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const userId = user.id
+
+    const body = await request.json()
+    const { type, taskId, data } = body
+
     const { data: taskData } = await supabase
       .from('tasks')
       .select(`
@@ -30,15 +38,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     const task = taskData as TaskWithAssignee | null
-
-    console.log('Task found:', task ? { id: task.id, title: task.title, assignee: task.assignee?.email, creator: task.creator?.email } : 'null')
-
     if (!task) {
-      console.log('Task not found for taskId:', taskId)
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
-    // Get the user who performed the action
     const { data: actorData } = await supabase
       .from('profiles')
       .select('*')
@@ -49,122 +52,83 @@ export async function POST(request: NextRequest) {
     const actorName = actor?.full_name || 'Someone'
     const taskUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/tasks/${taskId}`
 
+    const jobs: EmailJob[] = []
+
+    // Creator + assignee recipients for comment/status events, minus the actor
+    function taskWatchers(pref: 'notify_on_comments' | 'notify_on_status_change') {
+      const users: Profile[] = []
+      if (task!.creator && task!.creator.id !== userId && task!.creator.email_notifications && task!.creator[pref]) {
+        users.push(task!.creator)
+      }
+      if (
+        task!.assignee &&
+        task!.assignee.id !== userId &&
+        task!.assignee.id !== task!.creator?.id &&
+        task!.assignee.email_notifications &&
+        task!.assignee[pref]
+      ) {
+        users.push(task!.assignee)
+      }
+      return users
+    }
+
     switch (type) {
       case 'task_created': {
-        // Notify all other users about the new task
         const { data: allProfiles } = await supabase
           .from('profiles')
           .select('*')
           .neq('id', userId)
 
-        if (allProfiles) {
-          for (const profile of allProfiles) {
-            // Check master toggle AND individual preference
-            if (profile.email_notifications && profile.notify_on_assignment) {
-              const email = taskCreatedEmail(task.title, actorName, data?.priority || task.priority, taskUrl)
-              await sendEmail({
-                to: profile.email,
-                ...email,
-              })
-            }
+        for (const profile of allProfiles || []) {
+          if (profile.email_notifications && profile.notify_on_assignment) {
+            const email = taskCreatedEmail(task.title, actorName, data?.priority || task.priority, taskUrl)
+            jobs.push({ to: profile.email, ...email })
           }
         }
         break
       }
 
       case 'task_assigned': {
-        // Notify the assignee (if not the same person who assigned)
-        console.log('task_assigned check:', {
-          hasAssignee: !!task.assignee,
-          assigneeId: task.assignee?.id,
-          actorId: userId,
-          emailNotifications: task.assignee?.email_notifications,
-          notifyOnAssignment: task.assignee?.notify_on_assignment,
-        })
-        // Check master toggle AND individual preference
         if (task.assignee && task.assignee.id !== userId && task.assignee.email_notifications && task.assignee.notify_on_assignment) {
-          console.log('Sending assignment email to:', task.assignee.email)
           const email = taskAssignedEmail(task.title, actorName, taskUrl)
-          await sendEmail({
-            to: task.assignee.email,
-            ...email,
-          })
-        } else {
-          console.log('Skipping assignment notification - conditions not met')
+          jobs.push({ to: task.assignee.email, ...email })
         }
         break
       }
 
       case 'comment_added': {
-        // Notify task creator and assignee (except the commenter)
-        const notifyUsers = []
-
-        // Check master toggle AND individual preference
-        if (task.creator && task.creator.id !== userId && task.creator.email_notifications && task.creator.notify_on_comments) {
-          notifyUsers.push(task.creator)
-        }
-
-        if (
-          task.assignee &&
-          task.assignee.id !== userId &&
-          task.assignee.id !== task.creator?.id &&
-          task.assignee.email_notifications &&
-          task.assignee.notify_on_comments
-        ) {
-          notifyUsers.push(task.assignee)
-        }
-
-        for (const user of notifyUsers) {
-          const email = newCommentEmail(
-            task.title,
-            actorName,
-            data.comment || '',
-            taskUrl
-          )
-          await sendEmail({
-            to: user.email,
-            ...email,
-          })
+        for (const watcher of taskWatchers('notify_on_comments')) {
+          const email = newCommentEmail(task.title, actorName, data?.comment || '', taskUrl)
+          jobs.push({ to: watcher.email, ...email })
         }
         break
       }
 
       case 'status_changed': {
-        // Notify task creator and assignee (except the person who changed it)
-        const notifyUsers = []
-
-        // Check master toggle AND individual preference
-        if (task.creator && task.creator.id !== userId && task.creator.email_notifications && task.creator.notify_on_status_change) {
-          notifyUsers.push(task.creator)
-        }
-
-        if (
-          task.assignee &&
-          task.assignee.id !== userId &&
-          task.assignee.id !== task.creator?.id &&
-          task.assignee.email_notifications &&
-          task.assignee.notify_on_status_change
-        ) {
-          notifyUsers.push(task.assignee)
-        }
-
-        for (const user of notifyUsers) {
-          const email = statusChangedEmail(
-            task.title,
-            actorName,
-            data.newStatus || task.status,
-            taskUrl
-          )
-          await sendEmail({
-            to: user.email,
-            ...email,
-          })
+        for (const watcher of taskWatchers('notify_on_status_change')) {
+          const email = statusChangedEmail(task.title, actorName, data?.newStatus || task.status, taskUrl)
+          jobs.push({ to: watcher.email, ...email })
         }
         break
       }
+
+      default:
+        return NextResponse.json({ error: 'Unknown notification type' }, { status: 400 })
     }
 
-    return NextResponse.json({ success: true })
+    if (jobs.length > 0) {
+      // Send after the response is flushed so the caller never waits on SMTP
+      after(async () => {
+        const results = await Promise.allSettled(jobs.map((job) => sendEmail(job)))
+        for (const result of results) {
+          if (result.status === 'rejected') {
+            console.error('Notification email failed:', result.reason)
+          }
+        }
+      })
+    }
+
+    return NextResponse.json({ success: true, queued: jobs.length })
   } catch (error) {
     console.error('Notification error:', error)
     return NextResponse.json(

@@ -1,79 +1,64 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import {
-  TaskWithAssignee,
-  Comment,
-  Attachment,
-  ActivityLog,
-  Profile,
-  Priority,
-  TaskStatus,
-} from '@/types/database'
+import { TaskWithAssignee, Profile, Task } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  Edit,
-  Trash2,
-  Send,
-  Paperclip,
-  Download,
-  X,
-} from 'lucide-react'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { ArrowLeft, Calendar, Clock, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { CommentSection } from './CommentSection'
 import { FileUpload } from './FileUpload'
 import { ActivityFeed } from './ActivityFeed'
-import { RichTextEditor, RichTextDisplay } from './RichTextEditor'
-import { parseLocalDate } from '@/lib/utils'
+import { RichTextDisplay } from './RichTextDisplay'
+import { TaskForm, TaskFormValues, validateTaskDates } from './TaskForm'
+import { cn, parseLocalDate, getInitials } from '@/lib/utils'
+import { PRIORITY_META, STATUS_META } from '@/lib/task-meta'
+import {
+  useTaskDetail,
+  CommentWithUser,
+  AttachmentWithUser,
+  ActivityWithUser,
+} from '@/lib/hooks/use-task-detail'
 
 interface TaskDetailProps {
   task: TaskWithAssignee
-  comments: (Comment & { user: Profile })[]
-  attachments: (Attachment & { user: Profile })[]
-  activities: (ActivityLog & { user: Profile })[]
+  comments: CommentWithUser[]
+  attachments: AttachmentWithUser[]
+  activities: ActivityWithUser[]
   profiles: Profile[]
   currentUserId: string
 }
 
-const priorityConfig = {
-  urgent: { label: 'Urgent', className: 'bg-red-500 text-white' },
-  normal: { label: 'Normal', className: 'bg-amber-500 text-white' },
-  rainy_day: { label: 'Rainy Day', className: 'bg-slate-400 text-white' },
-}
-
-const statusConfig = {
-  not_started: { label: 'Not Started', className: 'bg-slate-100 text-slate-600' },
-  in_progress: { label: 'In Progress', className: 'bg-blue-100 text-blue-700' },
-  completed: { label: 'Completed', className: 'bg-green-100 text-green-700' },
+function formValuesFromTask(task: TaskWithAssignee): TaskFormValues {
+  return {
+    title: task.title,
+    notes: task.notes || '',
+    priority: task.priority,
+    status: task.status,
+    time_estimate: task.time_estimate || '',
+    start_date: task.start_date || '',
+    due_date: task.due_date || '',
+    assigned_to: task.assigned_to || 'unassigned',
+  }
 }
 
 export function TaskDetail({
@@ -84,172 +69,106 @@ export function TaskDetail({
   profiles,
   currentUserId,
 }: TaskDetailProps) {
-  const [task, setTask] = useState(initialTask)
-  const [comments, setComments] = useState(initialComments)
-  const [attachments, setAttachments] = useState(initialAttachments)
-  const [activities, setActivities] = useState(initialActivities)
-  const searchParams = useSearchParams()
-  const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true')
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
-
-  const [editForm, setEditForm] = useState({
-    title: task.title,
-    notes: task.notes || '',
-    priority: task.priority,
-    status: task.status,
-    time_estimate: task.time_estimate || '',
-    start_date: task.start_date || '',
-    due_date: task.due_date || '',
-    assigned_to: task.assigned_to || 'unassigned',
+  const {
+    task,
+    comments,
+    attachments,
+    activities,
+    updateTask,
+    deleteTask,
+    addComment,
+    removeComment,
+    addAttachment,
+    removeAttachment,
+  } = useTaskDetail({
+    initialTask,
+    initialComments,
+    initialAttachments,
+    initialActivities,
+    profiles,
   })
 
-  // Real-time subscriptions
-  useEffect(() => {
-    const taskChannel = supabase
-      .channel(`task-${task.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks',
-          filter: `id=eq.${task.id}`,
-        },
-        async () => {
-          const { data } = await supabase
-            .from('tasks')
-            .select(`
-              *,
-              assignee:profiles!tasks_assigned_to_fkey(*),
-              creator:profiles!tasks_created_by_fkey(*)
-            `)
-            .eq('id', task.id)
-            .single()
-          if (data) setTask(data)
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'comments',
-          filter: `task_id=eq.${task.id}`,
-        },
-        async () => {
-          const { data } = await supabase
-            .from('comments')
-            .select(`*, user:profiles(*)`)
-            .eq('task_id', task.id)
-            .order('created_at', { ascending: true })
-          if (data) setComments(data as (Comment & { user: Profile })[])
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'attachments',
-          filter: `task_id=eq.${task.id}`,
-        },
-        async () => {
-          const { data } = await supabase
-            .from('attachments')
-            .select(`*, user:profiles(*)`)
-            .eq('task_id', task.id)
-            .order('created_at', { ascending: false })
-          if (data) setAttachments(data as (Attachment & { user: Profile })[])
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'activity_log',
-          filter: `task_id=eq.${task.id}`,
-        },
-        async () => {
-          const { data } = await supabase
-            .from('activity_log')
-            .select(`*, user:profiles(*)`)
-            .eq('task_id', task.id)
-            .order('created_at', { ascending: false })
-            .limit(20)
-          if (data) setActivities(data as (ActivityLog & { user: Profile })[])
-        }
-      )
-      .subscribe()
+  const searchParams = useSearchParams()
+  const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true')
+  const [editForm, setEditForm] = useState<TaskFormValues>(() => formValuesFromTask(initialTask))
+  const router = useRouter()
 
-    return () => {
-      supabase.removeChannel(taskChannel)
-    }
-  }, [supabase, task.id])
+  const priority = PRIORITY_META[task.priority]
+  const status = STATUS_META[task.status]
+
+  function startEditing() {
+    setEditForm(formValuesFromTask(task))
+    setIsEditing(true)
+  }
 
   async function handleSave() {
-    const updates: Record<string, unknown> = {}
+    const dateError = validateTaskDates(editForm)
+    if (dateError) {
+      toast.error(dateError)
+      return
+    }
+
+    const patch: Partial<Task> = {}
     const changes: string[] = []
 
-    if (editForm.title !== task.title) {
-      updates.title = editForm.title
+    if (editForm.title !== task.title && editForm.title.trim()) {
+      patch.title = editForm.title
       changes.push('title')
     }
     if (editForm.notes !== (task.notes || '')) {
-      updates.notes = editForm.notes || null
+      patch.notes = editForm.notes || null
       changes.push('notes')
     }
     if (editForm.priority !== task.priority) {
-      updates.priority = editForm.priority
+      patch.priority = editForm.priority
       changes.push('priority')
     }
     if (editForm.status !== task.status) {
-      updates.status = editForm.status
+      patch.status = editForm.status
       changes.push('status')
     }
     if (editForm.time_estimate !== (task.time_estimate || '')) {
-      updates.time_estimate = editForm.time_estimate || null
+      patch.time_estimate = editForm.time_estimate || null
       changes.push('time_estimate')
     }
     if (editForm.start_date !== (task.start_date || '')) {
-      updates.start_date = editForm.start_date || null
+      patch.start_date = editForm.start_date || null
       changes.push('start_date')
     }
     if (editForm.due_date !== (task.due_date || '')) {
-      updates.due_date = editForm.due_date || null
+      patch.due_date = editForm.due_date || null
       changes.push('due_date')
     }
     if (editForm.assigned_to !== (task.assigned_to || 'unassigned')) {
-      updates.assigned_to = editForm.assigned_to === 'unassigned' ? null : editForm.assigned_to || null
+      patch.assigned_to = editForm.assigned_to === 'unassigned' ? null : editForm.assigned_to
       changes.push('assigned_to')
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (changes.length === 0) {
       setIsEditing(false)
       return
     }
 
-    const { error } = await supabase
-      .from('tasks')
-      .update(updates)
-      .eq('id', task.id)
-
-    if (error) {
-      toast.error('Failed to update task')
+    setIsEditing(false)
+    const ok = await updateTask(patch)
+    if (!ok) {
+      setIsEditing(true)
       return
     }
 
-    // Log activity
-    await supabase.from('activity_log').insert({
-      task_id: task.id,
-      user_id: currentUserId,
-      action: 'updated',
-      details: { changes },
-    })
+    const supabase = createClient()
+    supabase
+      .from('activity_log')
+      .insert({
+        task_id: task.id,
+        user_id: currentUserId,
+        action: 'updated',
+        details: { changes },
+      })
+      .then(({ error }) => {
+        if (error) console.error('Failed to log activity:', error)
+      })
 
-    // Send notifications for status or assignee changes
     if (changes.includes('status')) {
       fetch('/api/notifications', {
         method: 'POST',
@@ -257,112 +176,105 @@ export function TaskDetail({
         body: JSON.stringify({
           type: 'status_changed',
           taskId: task.id,
-          userId: currentUserId,
           data: { newStatus: editForm.status },
         }),
       })
     }
-
-    if (changes.includes('assigned_to') && editForm.assigned_to !== 'unassigned' && editForm.assigned_to !== currentUserId) {
+    if (
+      changes.includes('assigned_to') &&
+      editForm.assigned_to !== 'unassigned' &&
+      editForm.assigned_to !== currentUserId
+    ) {
       fetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'task_assigned',
-          taskId: task.id,
-          userId: currentUserId,
-        }),
+        body: JSON.stringify({ type: 'task_assigned', taskId: task.id }),
       })
     }
-
-    toast.success('Task updated')
-    setIsEditing(false)
-    router.refresh()
   }
 
   async function handleDelete() {
-    const { error } = await supabase.from('tasks').delete().eq('id', task.id)
-
-    if (error) {
-      toast.error('Failed to delete task')
-      return
+    const ok = await deleteTask()
+    if (ok) {
+      toast.success('Task deleted')
+      router.push('/dashboard')
     }
-
-    toast.success('Task deleted')
-    router.push('/dashboard')
   }
-
-  const assigneeInitials = task.assignee?.full_name
-    ? task.assignee.full_name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-    : null
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            {isEditing ? (
-              <Input
-                value={editForm.title}
-                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                className="text-xl font-bold"
-              />
-            ) : (
-              <h1 className="text-2xl font-bold text-slate-900">{task.title}</h1>
-            )}
-            <Badge className={priorityConfig[task.priority].className}>
-              {priorityConfig[task.priority].label}
-            </Badge>
-            <Badge className={statusConfig[task.status].className}>
-              {statusConfig[task.status].label}
-            </Badge>
-          </div>
+      {/* Header */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Button asChild variant="ghost" size="icon">
+          <Link href="/dashboard" aria-label="Back to dashboard">
+            <ArrowLeft className="size-4" />
+          </Link>
+        </Button>
+        <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2">
+          {isEditing ? (
+            <Input
+              value={editForm.title}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              className="text-lg font-semibold sm:max-w-md"
+              aria-label="Task title"
+            />
+          ) : (
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight break-words">
+              {task.title}
+            </h1>
+          )}
+          <span className={cn('px-2 py-0.5 text-xs font-medium rounded-md', priority.badgeClass)}>
+            {priority.label}
+          </span>
+          <span className={cn('px-2 py-0.5 text-xs font-medium rounded-md', status.badgeClass)}>
+            {status.label}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           {isEditing ? (
             <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave}>Save</Button>
+              <Button size="sm" onClick={handleSave}>
+                Save
+              </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}>
-                <Edit className="h-4 w-4" />
+              <Button variant="outline" size="icon" onClick={startEditing} aria-label="Edit task">
+                <Edit className="size-4" />
               </Button>
-              <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="icon" className="text-red-600 hover:text-red-700">
-                    <Trash2 className="h-4 w-4" />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    aria-label="Delete task"
+                  >
+                    <Trash2 className="size-4" />
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Delete Task</DialogTitle>
-                  </DialogHeader>
-                  <p className="text-slate-600">
-                    Are you sure you want to delete &quot;{task.title}&quot;? This action cannot be undone.
-                  </p>
-                  <div className="flex justify-end gap-3 mt-4">
-                    <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button variant="destructive" onClick={handleDelete}>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete task?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      &ldquo;{task.title}&rdquo; and its comments, attachments, and activity will
+                      be permanently deleted.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-white hover:bg-destructive/90"
+                    >
                       Delete
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </>
           )}
         </div>
@@ -374,184 +286,97 @@ export function TaskDetail({
             <CardHeader>
               <CardTitle className="text-base">Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               {isEditing ? (
-                <>
-                  <div className="space-y-2">
-                    <Label>Notes</Label>
-                    <RichTextEditor
-                      content={editForm.notes}
-                      onChange={(value) => setEditForm({ ...editForm, notes: value })}
-                      placeholder="Add notes..."
-                      minHeight="200px"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Priority</Label>
-                      <Select
-                        value={editForm.priority}
-                        onValueChange={(v) => setEditForm({ ...editForm, priority: v as Priority })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="urgent">Urgent</SelectItem>
-                          <SelectItem value="normal">Normal</SelectItem>
-                          <SelectItem value="rainy_day">Rainy Day</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Status</Label>
-                      <Select
-                        value={editForm.status}
-                        onValueChange={(v) => setEditForm({ ...editForm, status: v as TaskStatus })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="not_started">Not Started</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Start Date</Label>
-                      <Input
-                        type="date"
-                        value={editForm.start_date}
-                        onChange={(e) => setEditForm({ ...editForm, start_date: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Due Date</Label>
-                      <Input
-                        type="date"
-                        value={editForm.due_date}
-                        onChange={(e) => setEditForm({ ...editForm, due_date: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Time Estimate</Label>
-                      <Input
-                        value={editForm.time_estimate}
-                        onChange={(e) => setEditForm({ ...editForm, time_estimate: e.target.value })}
-                        placeholder="e.g., 2 hours"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Assignee</Label>
-                      <Select
-                        value={editForm.assigned_to}
-                        onValueChange={(v) => setEditForm({ ...editForm, assigned_to: v })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Unassigned" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="unassigned">Unassigned</SelectItem>
-                          {profiles.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.full_name || p.email}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </>
+                <TaskForm
+                  values={editForm}
+                  onChange={setEditForm}
+                  profiles={profiles}
+                  showTitle={false}
+                  notesMinHeight="160px"
+                />
               ) : (
-                <>
+                <div className="space-y-4">
                   {task.notes && (
                     <div>
-                      <Label className="text-slate-500">Notes</Label>
-                      <div className="mt-1 text-slate-700">
+                      <Label className="text-muted-foreground">Notes</Label>
+                      <div className="mt-1">
                         <RichTextDisplay content={task.notes} />
                       </div>
                     </div>
                   )}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {task.start_date && (
                       <div>
-                        <Label className="text-slate-500">Start Date</Label>
-                        <p className="mt-1 flex items-center gap-2 text-slate-700">
-                          <Calendar className="h-4 w-4" />
+                        <Label className="text-muted-foreground">Start Date</Label>
+                        <p className="mt-1 flex items-center gap-2 text-sm">
+                          <Calendar className="size-4 text-muted-foreground" />
                           {format(parseLocalDate(task.start_date), 'MMM d, yyyy')}
                         </p>
                       </div>
                     )}
                     {task.due_date && (
                       <div>
-                        <Label className="text-slate-500">Due Date</Label>
-                        <p className="mt-1 flex items-center gap-2 text-slate-700">
-                          <Calendar className="h-4 w-4" />
+                        <Label className="text-muted-foreground">Due Date</Label>
+                        <p className="mt-1 flex items-center gap-2 text-sm">
+                          <Calendar className="size-4 text-muted-foreground" />
                           {format(parseLocalDate(task.due_date), 'MMM d, yyyy')}
                         </p>
                       </div>
                     )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
                     {task.time_estimate && (
                       <div>
-                        <Label className="text-slate-500">Time Estimate</Label>
-                        <p className="mt-1 flex items-center gap-2 text-slate-700">
-                          <Clock className="h-4 w-4" />
+                        <Label className="text-muted-foreground">Time Estimate</Label>
+                        <p className="mt-1 flex items-center gap-2 text-sm">
+                          <Clock className="size-4 text-muted-foreground" />
                           {task.time_estimate}
                         </p>
                       </div>
                     )}
                     <div>
-                      <Label className="text-slate-500">Assignee</Label>
+                      <Label className="text-muted-foreground">Lead</Label>
                       <div className="mt-1 flex items-center gap-2">
                         {task.assignee ? (
                           <>
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-xs bg-[#00467F]/10 text-[#00467F]">
-                                {assigneeInitials}
+                            <Avatar className="size-6">
+                              <AvatarFallback className="text-xs bg-accent text-accent-foreground">
+                                {getInitials(task.assignee.full_name, task.assignee.email)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-slate-700">{task.assignee.full_name}</span>
+                            <span className="text-sm">{task.assignee.full_name}</span>
                           </>
                         ) : (
-                          <span className="text-slate-400">Unassigned</span>
+                          <span className="text-sm text-muted-foreground">Unassigned</span>
                         )}
                       </div>
                     </div>
                   </div>
-                </>
+                </div>
               )}
             </CardContent>
           </Card>
 
           <Tabs defaultValue="comments">
             <TabsList>
-              <TabsTrigger value="comments">
-                Comments ({comments.length})
-              </TabsTrigger>
-              <TabsTrigger value="attachments">
-                Attachments ({attachments.length})
-              </TabsTrigger>
+              <TabsTrigger value="comments">Comments ({comments.length})</TabsTrigger>
+              <TabsTrigger value="attachments">Attachments ({attachments.length})</TabsTrigger>
             </TabsList>
-            <TabsContent value="comments" className="mt-4">
+            <TabsContent value="comments" className="mt-4" id="comments">
               <CommentSection
                 taskId={task.id}
                 comments={comments}
                 currentUserId={currentUserId}
+                onAdd={addComment}
+                onRemove={removeComment}
               />
             </TabsContent>
-            <TabsContent value="attachments" className="mt-4">
+            <TabsContent value="attachments" className="mt-4" id="attachments">
               <FileUpload
                 taskId={task.id}
                 attachments={attachments}
                 currentUserId={currentUserId}
+                onAdd={addAttachment}
+                onRemove={removeAttachment}
               />
             </TabsContent>
           </Tabs>
