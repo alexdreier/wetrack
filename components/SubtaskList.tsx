@@ -14,6 +14,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Circle, CircleCheck, Plus, Trash2, UserRound } from 'lucide-react'
+import { Calendar, Circle, CircleCheck, Plus, Trash2, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, parseLocalDate, getInitials } from '@/lib/utils'
 
@@ -132,11 +133,31 @@ export function SubtaskList({
               {subtask.title}
             </Link>
 
-            {subtask.due_date && (
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {format(parseLocalDate(subtask.due_date), 'MMM d')}
-              </span>
-            )}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  aria-label="Set due date"
+                  className={cn(
+                    'shrink-0 inline-flex items-center gap-1 text-xs rounded-sm px-1 py-0.5 hover:bg-muted transition-all',
+                    subtask.due_date
+                      ? 'text-muted-foreground'
+                      : 'text-muted-foreground/50 opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
+                  )}
+                >
+                  <Calendar className="size-3.5" />
+                  {subtask.due_date && format(parseLocalDate(subtask.due_date), 'MMM d')}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-auto p-2">
+                <Input
+                  type="date"
+                  defaultValue={subtask.due_date || ''}
+                  onChange={(e) => onUpdate(subtask.id, { due_date: e.target.value || null })}
+                  className="h-8"
+                  aria-label="Due date"
+                />
+              </PopoverContent>
+            </Popover>
 
             <Select
               value={subtask.assigned_to || 'unassigned'}

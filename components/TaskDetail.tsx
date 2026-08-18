@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { format } from 'date-fns'
 import { TaskWithAssignee, Profile, Task } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -11,7 +10,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,15 +21,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Calendar, Clock, CornerDownRight, Edit, Trash2 } from 'lucide-react'
+import { ArrowLeft, CornerDownRight, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { SubtaskList } from './SubtaskList'
 import { CommentSection } from './CommentSection'
 import { FileUpload } from './FileUpload'
 import { ActivityFeed } from './ActivityFeed'
 import { RichTextDisplay } from './RichTextDisplay'
-import { TaskForm, TaskFormValues, validateTaskDates } from './TaskForm'
-import { cn, parseLocalDate, getInitials } from '@/lib/utils'
+import { TaskProperties } from './TaskProperties'
+import { RichTextEditor } from './RichTextEditor'
+import { cn } from '@/lib/utils'
 import { PRIORITY_META, STATUS_META } from '@/lib/task-meta'
 import {
   useTaskDetail,
@@ -51,18 +50,7 @@ interface TaskDetailProps {
   currentUserId: string
 }
 
-function formValuesFromTask(task: TaskWithAssignee): TaskFormValues {
-  return {
-    title: task.title,
-    notes: task.notes || '',
-    priority: task.priority,
-    status: task.status,
-    time_estimate: task.time_estimate || '',
-    start_date: task.start_date || '',
-    due_date: task.due_date || '',
-    assigned_to: task.assigned_to || 'unassigned',
-  }
-}
+type EditForm = { title: string; notes: string }
 
 export function TaskDetail({
   task: initialTask,
@@ -100,71 +88,24 @@ export function TaskDetail({
 
   const searchParams = useSearchParams()
   const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true')
-  const [editForm, setEditForm] = useState<TaskFormValues>(() => formValuesFromTask(initialTask))
+  const [editForm, setEditForm] = useState<EditForm>({
+    title: initialTask.title,
+    notes: initialTask.notes || '',
+  })
   const router = useRouter()
 
   const priority = PRIORITY_META[task.priority]
   const status = STATUS_META[task.status]
 
   function startEditing() {
-    setEditForm(formValuesFromTask(task))
+    setEditForm({ title: task.title, notes: task.notes || '' })
     setIsEditing(true)
   }
 
-  async function handleSave() {
-    const dateError = validateTaskDates(editForm)
-    if (dateError) {
-      toast.error(dateError)
-      return
-    }
-
-    const patch: Partial<Task> = {}
-    const changes: string[] = []
-
-    if (editForm.title !== task.title && editForm.title.trim()) {
-      patch.title = editForm.title
-      changes.push('title')
-    }
-    if (editForm.notes !== (task.notes || '')) {
-      patch.notes = editForm.notes || null
-      changes.push('notes')
-    }
-    if (editForm.priority !== task.priority) {
-      patch.priority = editForm.priority
-      changes.push('priority')
-    }
-    if (editForm.status !== task.status) {
-      patch.status = editForm.status
-      changes.push('status')
-    }
-    if (editForm.time_estimate !== (task.time_estimate || '')) {
-      patch.time_estimate = editForm.time_estimate || null
-      changes.push('time_estimate')
-    }
-    if (editForm.start_date !== (task.start_date || '')) {
-      patch.start_date = editForm.start_date || null
-      changes.push('start_date')
-    }
-    if (editForm.due_date !== (task.due_date || '')) {
-      patch.due_date = editForm.due_date || null
-      changes.push('due_date')
-    }
-    if (editForm.assigned_to !== (task.assigned_to || 'unassigned')) {
-      patch.assigned_to = editForm.assigned_to === 'unassigned' ? null : editForm.assigned_to
-      changes.push('assigned_to')
-    }
-
-    if (changes.length === 0) {
-      setIsEditing(false)
-      return
-    }
-
-    setIsEditing(false)
+  // Single write path: optimistic update, then activity log + notifications
+  async function applyPatch(patch: Partial<Task>, changes: string[]) {
     const ok = await updateTask(patch)
-    if (!ok) {
-      setIsEditing(true)
-      return
-    }
+    if (!ok) return false
 
     const supabase = createClient()
     supabase
@@ -179,28 +120,48 @@ export function TaskDetail({
         if (error) console.error('Failed to log activity:', error)
       })
 
-    if (changes.includes('status')) {
+    if (changes.includes('status') && patch.status) {
       fetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'status_changed',
           taskId: task.id,
-          data: { newStatus: editForm.status },
+          data: { newStatus: patch.status },
         }),
       })
     }
-    if (
-      changes.includes('assigned_to') &&
-      editForm.assigned_to !== 'unassigned' &&
-      editForm.assigned_to !== currentUserId
-    ) {
+    if (changes.includes('assigned_to') && patch.assigned_to && patch.assigned_to !== currentUserId) {
       fetch('/api/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'task_assigned', taskId: task.id }),
       })
     }
+    return true
+  }
+
+  async function handleSave() {
+    const patch: Partial<Task> = {}
+    const changes: string[] = []
+
+    if (editForm.title !== task.title && editForm.title.trim()) {
+      patch.title = editForm.title
+      changes.push('title')
+    }
+    if (editForm.notes !== (task.notes || '')) {
+      patch.notes = editForm.notes || null
+      changes.push('notes')
+    }
+
+    if (changes.length === 0) {
+      setIsEditing(false)
+      return
+    }
+
+    setIsEditing(false)
+    const ok = await applyPatch(patch, changes)
+    if (!ok) setIsEditing(true)
   }
 
   async function handleDelete() {
@@ -307,72 +268,33 @@ export function TaskDetail({
             <CardHeader>
               <CardTitle className="text-base">Details</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-5">
+              <TaskProperties task={task} profiles={profiles} onPatch={applyPatch} />
+
               {isEditing ? (
-                <TaskForm
-                  values={editForm}
-                  onChange={setEditForm}
-                  profiles={profiles}
-                  showTitle={false}
-                  notesMinHeight="160px"
-                />
-              ) : (
-                <div className="space-y-4">
-                  {task.notes && (
-                    <div>
-                      <Label className="text-muted-foreground">Notes</Label>
-                      <div className="mt-1">
-                        <RichTextDisplay content={task.notes} />
-                      </div>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {task.start_date && (
-                      <div>
-                        <Label className="text-muted-foreground">Start Date</Label>
-                        <p className="mt-1 flex items-center gap-2 text-sm">
-                          <Calendar className="size-4 text-muted-foreground" />
-                          {format(parseLocalDate(task.start_date), 'MMM d, yyyy')}
-                        </p>
-                      </div>
-                    )}
-                    {task.due_date && (
-                      <div>
-                        <Label className="text-muted-foreground">Due Date</Label>
-                        <p className="mt-1 flex items-center gap-2 text-sm">
-                          <Calendar className="size-4 text-muted-foreground" />
-                          {format(parseLocalDate(task.due_date), 'MMM d, yyyy')}
-                        </p>
-                      </div>
-                    )}
-                    {task.time_estimate && (
-                      <div>
-                        <Label className="text-muted-foreground">Time Estimate</Label>
-                        <p className="mt-1 flex items-center gap-2 text-sm">
-                          <Clock className="size-4 text-muted-foreground" />
-                          {task.time_estimate}
-                        </p>
-                      </div>
-                    )}
-                    <div>
-                      <Label className="text-muted-foreground">Lead</Label>
-                      <div className="mt-1 flex items-center gap-2">
-                        {task.assignee ? (
-                          <>
-                            <Avatar className="size-6">
-                              <AvatarFallback className="text-xs bg-accent text-accent-foreground">
-                                {getInitials(task.assignee.full_name, task.assignee.email)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{task.assignee.full_name}</span>
-                          </>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Unassigned</span>
-                        )}
-                      </div>
-                    </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Notes</Label>
+                  <RichTextEditor
+                    content={editForm.notes}
+                    onChange={(notes) => setEditForm({ ...editForm, notes })}
+                    placeholder="Add notes..."
+                    minHeight="160px"
+                  />
+                </div>
+              ) : task.notes ? (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Notes</Label>
+                  <div className="mt-1">
+                    <RichTextDisplay content={task.notes} />
                   </div>
                 </div>
+              ) : (
+                <button
+                  onClick={startEditing}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  + Add notes
+                </button>
               )}
             </CardContent>
           </Card>
