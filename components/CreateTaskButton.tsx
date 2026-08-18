@@ -15,8 +15,15 @@ import { toast } from 'sonner'
 import { TaskForm, TaskFormValues, EMPTY_TASK_FORM, validateTaskDates } from './TaskForm'
 import { useTasks } from './TasksProvider'
 
-export function CreateTaskButton() {
-  const [open, setOpen] = useState(false)
+interface CreateTaskButtonProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function CreateTaskButton({ open: controlledOpen, onOpenChange }: CreateTaskButtonProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const open = controlledOpen ?? uncontrolledOpen
+  const setOpen = onOpenChange ?? setUncontrolledOpen
   const [loading, setLoading] = useState(false)
   const [values, setValues] = useState<TaskFormValues>(EMPTY_TASK_FORM)
   const { profiles, currentUserId, addTask } = useTasks()

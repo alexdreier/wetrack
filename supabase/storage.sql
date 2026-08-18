@@ -1,10 +1,12 @@
 -- WETrack Storage Setup
 -- Run this in your Supabase SQL Editor after schema.sql
 
--- Create storage bucket for attachments
+-- Create storage bucket for attachments.
+-- The app serves files and avatars via getPublicUrl(), so the bucket must
+-- be public (production was flipped to public in the dashboard already).
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('attachments', 'attachments', false)
-ON CONFLICT (id) DO NOTHING;
+VALUES ('attachments', 'attachments', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
 
 -- Storage policies
 CREATE POLICY "Authenticated users can upload attachments"

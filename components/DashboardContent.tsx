@@ -10,11 +10,23 @@ import { Calendar, List } from 'lucide-react'
 import { cn, parseLocalDate } from '@/lib/utils'
 import { PRIORITY_META, STATUS_META } from '@/lib/task-meta'
 import { useTasks } from '@/components/TasksProvider'
+import { useHotkeys } from '@/lib/hooks/use-hotkeys'
+import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog'
 import { format } from 'date-fns'
 
 export function DashboardContent({ firstName }: { firstName: string }) {
   const [view, setView] = useState<'calendar' | 'list'>('list')
+  const [createOpen, setCreateOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const { tasks, statusCounts, priorityCounts } = useTasks()
+
+  useHotkeys({
+    n: () => setCreateOpen(true),
+    '/': () => {
+      document.querySelector<HTMLInputElement>('[data-search-input]')?.focus()
+    },
+    '?': () => setShortcutsOpen(true),
+  })
 
   const open = tasks.length - statusCounts.completed
   const inProgress = statusCounts.in_progress
@@ -47,8 +59,10 @@ export function DashboardContent({ firstName }: { firstName: string }) {
             ))}
           </div>
         </div>
-        <CreateTaskButton />
+        <CreateTaskButton open={createOpen} onOpenChange={setCreateOpen} />
       </div>
+
+      <KeyboardShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
 
       {/* Filters + view toggle */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

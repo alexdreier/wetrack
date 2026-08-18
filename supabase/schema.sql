@@ -5,7 +5,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create custom types
-CREATE TYPE priority_level AS ENUM ('urgent', 'next_week', 'rainy_day');
+CREATE TYPE priority_level AS ENUM ('urgent', 'normal', 'rainy_day');
 CREATE TYPE task_status AS ENUM ('not_started', 'in_progress', 'completed');
 CREATE TYPE activity_action AS ENUM ('created', 'updated', 'commented', 'attached', 'status_changed', 'assigned');
 
@@ -14,6 +14,8 @@ CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   full_name TEXT,
   email TEXT NOT NULL,
+  avatar_url TEXT,
+  things_integration BOOLEAN DEFAULT false,
   email_notifications BOOLEAN DEFAULT true,
   notify_on_assignment BOOLEAN DEFAULT true,
   notify_on_comments BOOLEAN DEFAULT true,
@@ -26,7 +28,7 @@ CREATE TABLE tasks (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   title TEXT NOT NULL,
   notes TEXT,
-  priority priority_level DEFAULT 'next_week',
+  priority priority_level DEFAULT 'normal',
   status task_status DEFAULT 'not_started',
   time_estimate TEXT,
   start_date DATE,
@@ -74,9 +76,13 @@ CREATE INDEX idx_tasks_created_by ON tasks(created_by);
 CREATE INDEX idx_tasks_status ON tasks(status);
 CREATE INDEX idx_tasks_priority ON tasks(priority);
 CREATE INDEX idx_tasks_due_date ON tasks(due_date);
+CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);
+CREATE INDEX idx_tasks_updated_at ON tasks(updated_at DESC);
 CREATE INDEX idx_comments_task_id ON comments(task_id);
+CREATE INDEX idx_comments_task_created ON comments(task_id, created_at);
 CREATE INDEX idx_attachments_task_id ON attachments(task_id);
 CREATE INDEX idx_activity_log_task_id ON activity_log(task_id);
+CREATE INDEX idx_activity_log_task_created ON activity_log(task_id, created_at DESC);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at()
@@ -166,4 +172,5 @@ CREATE POLICY "Authenticated users can create activity entries" ON activity_log
 -- Enable Realtime for tables that need live updates
 ALTER PUBLICATION supabase_realtime ADD TABLE tasks;
 ALTER PUBLICATION supabase_realtime ADD TABLE comments;
+ALTER PUBLICATION supabase_realtime ADD TABLE attachments;
 ALTER PUBLICATION supabase_realtime ADD TABLE activity_log;
