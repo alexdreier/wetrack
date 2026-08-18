@@ -1,40 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Oxygen:wght@300;400;700&display=swap');
 
 @custom-variant dark (&:is(.dark *));
-
-/* WestEd Brand Colors */
-:root {
-  --wested-blue: #00467F;
-  --wested-green: #54B948;
-  --wested-accent: #1669C9;
-  --wested-purple: #3C3675;
-  --wested-dark: #1C1752;
-  --wested-grey: #34454F;
-  --wested-light-grey: #ABC1DA;
-  --wested-bg: #F7F7F7;
-  --wested-text: #222222;
-}
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Oxygen", sans-serif;
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -55,84 +28,82 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
 
-  /* WestEd custom colors for Tailwind */
-  --color-wested-blue: #00467F;
-  --color-wested-green: #54B948;
-  --color-wested-accent: #1669C9;
-  --color-wested-purple: #3C3675;
+  /* WestEd brand accents (use sparingly; semantic tokens cover the rest) */
+  --color-wested-blue: #00467f;
+  --color-wested-green: #54b948;
+
+  /* Priority/status accent tokens — single source used by lib/task-meta.ts */
+  --color-urgent: var(--urgent);
+  --color-urgent-foreground: var(--urgent-foreground);
+  --color-urgent-muted: var(--urgent-muted);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-muted: var(--info-muted);
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: #F7F7F7;
-  --foreground: #222222;
+  --radius: 0.5rem;
+  --background: #fafafa;
+  --foreground: #18181b;
   --card: #ffffff;
-  --card-foreground: #222222;
+  --card-foreground: #18181b;
   --popover: #ffffff;
-  --popover-foreground: #222222;
-  --primary: #00467F;
+  --popover-foreground: #18181b;
+  --primary: #00467f;
   --primary-foreground: #ffffff;
-  --secondary: #54B948;
-  --secondary-foreground: #ffffff;
-  --muted: #F7F7F7;
-  --muted-foreground: #34454F;
-  --accent: #1669C9;
-  --accent-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #eef4fa;
+  --accent-foreground: #00467f;
   --destructive: #dc2626;
-  --border: #ABC1DA;
-  --input: #ABC1DA;
-  --ring: #00467F;
-  --chart-1: #00467F;
-  --chart-2: #54B948;
-  --chart-3: #1669C9;
-  --chart-4: #3C3675;
-  --chart-5: #5C50C3;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #222222;
-  --sidebar-primary: #00467F;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #F7F7F7;
-  --sidebar-accent-foreground: #222222;
-  --sidebar-border: #ABC1DA;
-  --sidebar-ring: #00467F;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #1669c9;
+  --urgent: #dc2626;
+  --urgent-foreground: #b91c1c;
+  --urgent-muted: #fef2f2;
+  --success: #16a34a;
+  --success-foreground: #15803d;
+  --success-muted: #f0fdf4;
+  --info: #1669c9;
+  --info-foreground: #114e91;
+  --info-muted: #eff6ff;
 }
 
 .dark {
-  --background: #1C1752;
-  --foreground: #ffffff;
-  --card: #3C3675;
-  --card-foreground: #ffffff;
-  --popover: #3C3675;
-  --popover-foreground: #ffffff;
-  --primary: #1669C9;
-  --primary-foreground: #ffffff;
-  --secondary: #54B948;
-  --secondary-foreground: #ffffff;
-  --muted: #3C3675;
-  --muted-foreground: #ABC1DA;
-  --accent: #5C50C3;
-  --accent-foreground: #ffffff;
+  --background: #111113;
+  --foreground: #f4f4f5;
+  --card: #1b1b1f;
+  --card-foreground: #f4f4f5;
+  --popover: #1b1b1f;
+  --popover-foreground: #f4f4f5;
+  --primary: #4d94d6;
+  --primary-foreground: #0b1420;
+  --secondary: #26262b;
+  --secondary-foreground: #f4f4f5;
+  --muted: #26262b;
+  --muted-foreground: #a1a1aa;
+  --accent: #16232f;
+  --accent-foreground: #7ab3e0;
   --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #1669C9;
-  --chart-1: #1669C9;
-  --chart-2: #54B948;
-  --chart-3: #5C50C3;
-  --chart-4: #00467F;
-  --chart-5: #ABC1DA;
-  --sidebar: #3C3675;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #1669C9;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1C1752;
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #1669C9;
+  --border: rgba(255, 255, 255, 0.09);
+  --input: rgba(255, 255, 255, 0.13);
+  --ring: #4d94d6;
+  --urgent: #f87171;
+  --urgent-foreground: #fca5a5;
+  --urgent-muted: rgba(248, 113, 113, 0.1);
+  --success: #4ade80;
+  --success-foreground: #86efac;
+  --success-muted: rgba(74, 222, 128, 0.1);
+  --info: #60a5fa;
+  --info-foreground: #93c5fd;
+  --info-muted: rgba(96, 165, 250, 0.1);
 }
 
 @layer base {
@@ -141,10 +112,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "Oxygen", sans-serif;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    color: var(--wested-purple);
   }
   button,
   [role="button"],
@@ -156,5 +123,50 @@
   input[type="button"],
   [data-slot="button"] {
     cursor: pointer;
+  }
+}
+
+/* Rich text (TipTap editor + read-only display) */
+@layer components {
+  .prose-content p {
+    margin: 0.375em 0;
+  }
+  .prose-content p:first-child {
+    margin-top: 0;
+  }
+  .prose-content p:last-child {
+    margin-bottom: 0;
+  }
+  .prose-content ul {
+    list-style-type: disc;
+    padding-left: 1.5em;
+  }
+  .prose-content ol {
+    list-style-type: decimal;
+    padding-left: 1.5em;
+  }
+  .prose-content li {
+    margin: 0.25em 0;
+  }
+  .prose-content a {
+    color: var(--info);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .prose-content a:hover {
+    color: var(--info-foreground);
+  }
+  .ProseMirror {
+    min-height: var(--editor-min-height, 100px);
+  }
+  .ProseMirror:focus {
+    outline: none;
+  }
+  .ProseMirror p.is-editor-empty:first-child::before {
+    color: var(--muted-foreground);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
   }
 }

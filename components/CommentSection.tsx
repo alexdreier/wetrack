@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Send, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { RichTextEditor, RichTextDisplay } from './RichTextEditor'
+import { RichTextEditor } from './RichTextEditor'
+import { RichTextDisplay } from './RichTextDisplay'
 
 interface CommentSectionProps {
   taskId: string

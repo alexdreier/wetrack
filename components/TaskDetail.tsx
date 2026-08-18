@@ -52,7 +52,8 @@ import { toast } from 'sonner'
 import { CommentSection } from './CommentSection'
 import { FileUpload } from './FileUpload'
 import { ActivityFeed } from './ActivityFeed'
-import { RichTextEditor, RichTextDisplay } from './RichTextEditor'
+import { RichTextEditor } from './RichTextEditor'
+import { RichTextDisplay } from './RichTextDisplay'
 import { parseLocalDate } from '@/lib/utils'
 
 interface TaskDetailProps {

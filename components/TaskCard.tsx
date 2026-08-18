@@ -35,7 +35,7 @@ function ThingsIcon({ className }: { className?: string }) {
   )
 }
 import { toast } from 'sonner'
-import { RichTextDisplay } from './RichTextEditor'
+import { RichTextDisplay } from './RichTextDisplay'
 import { parseLocalDate } from '@/lib/utils'
 
 interface TaskCardProps {

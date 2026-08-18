@@ -10,7 +10,7 @@ export type Priority = 'urgent' | 'normal' | 'rainy_day'
 export type TaskStatus = 'not_started' | 'in_progress' | 'completed'
 export type ActivityAction = 'created' | 'updated' | 'commented' | 'attached' | 'status_changed' | 'assigned'
 
-export interface Profile {
+export type Profile = {
   id: string
   full_name: string | null
   email: string
@@ -23,7 +23,7 @@ export interface Profile {
   created_at: string
 }
 
-export interface Task {
+export type Task = {
   id: string
   title: string
   notes: string | null
@@ -38,12 +38,12 @@ export interface Task {
   updated_at: string
 }
 
-export interface TaskWithAssignee extends Task {
+export type TaskWithAssignee = Task & {
   assignee?: Profile | null
   creator?: Profile | null
 }
 
-export interface Comment {
+export type Comment = {
   id: string
   task_id: string
   user_id: string
@@ -52,7 +52,7 @@ export interface Comment {
   user?: Profile
 }
 
-export interface Attachment {
+export type Attachment = {
   id: string
   task_id: string
   user_id: string
@@ -64,7 +64,7 @@ export interface Attachment {
   user?: Profile
 }
 
-export interface ActivityLog {
+export type ActivityLog = {
   id: string
   task_id: string
   user_id: string
@@ -74,34 +74,128 @@ export interface ActivityLog {
   user?: Profile
 }
 
-export interface Database {
+// Generated-style schema for the supabase-js typed client. Row shapes exclude
+// the join fields (user/assignee/creator) that only exist on embedded selects.
+export type Database = {
   public: {
     Tables: {
       profiles: {
         Row: Profile
-        Insert: Omit<Profile, 'created_at'>
+        Insert: Omit<Profile, 'created_at'> & { created_at?: string }
         Update: Partial<Omit<Profile, 'id' | 'created_at'>>
+        Relationships: []
       }
       tasks: {
         Row: Task
-        Insert: Omit<Task, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Task, 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<Task, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Omit<Task, 'id' | 'created_at'>>
+        Relationships: [
+          {
+            foreignKeyName: 'tasks_assigned_to_fkey'
+            columns: ['assigned_to']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tasks_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
       }
       comments: {
-        Row: Comment
-        Insert: Omit<Comment, 'id' | 'created_at'>
-        Update: Partial<Omit<Comment, 'id' | 'created_at'>>
+        Row: Omit<Comment, 'user'>
+        Insert: Omit<Comment, 'id' | 'created_at' | 'user'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Omit<Comment, 'id' | 'created_at' | 'user'>>
+        Relationships: [
+          {
+            foreignKeyName: 'comments_task_id_fkey'
+            columns: ['task_id']
+            isOneToOne: false
+            referencedRelation: 'tasks'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'comments_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
       }
       attachments: {
-        Row: Attachment
-        Insert: Omit<Attachment, 'id' | 'created_at'>
-        Update: Partial<Omit<Attachment, 'id' | 'created_at'>>
+        Row: Omit<Attachment, 'user'>
+        Insert: Omit<Attachment, 'id' | 'created_at' | 'user'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Omit<Attachment, 'id' | 'created_at' | 'user'>>
+        Relationships: [
+          {
+            foreignKeyName: 'attachments_task_id_fkey'
+            columns: ['task_id']
+            isOneToOne: false
+            referencedRelation: 'tasks'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'attachments_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
       }
       activity_log: {
-        Row: ActivityLog
-        Insert: Omit<ActivityLog, 'id' | 'created_at'>
-        Update: Partial<Omit<ActivityLog, 'id' | 'created_at'>>
+        Row: Omit<ActivityLog, 'user'>
+        Insert: Omit<ActivityLog, 'id' | 'created_at' | 'user'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Omit<ActivityLog, 'id' | 'created_at' | 'user'>>
+        Relationships: [
+          {
+            foreignKeyName: 'activity_log_task_id_fkey'
+            columns: ['task_id']
+            isOneToOne: false
+            referencedRelation: 'tasks'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'activity_log_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      priority_level: Priority
+      task_status: TaskStatus
+      activity_action: ActivityAction
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
