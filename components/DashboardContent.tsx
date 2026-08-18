@@ -40,7 +40,7 @@ export function DashboardContent({ firstName }: { firstName: string }) {
     { label: 'done', value: completed, dotClass: STATUS_META.completed.dotClass },
   ]
 
-  const upcoming = tasks.filter((t) => t.status !== 'completed').slice(0, 10)
+  const upcoming = tasks.filter((t) => !t.parent_id && t.status !== 'completed').slice(0, 10)
 
   return (
     <div className="space-y-6">

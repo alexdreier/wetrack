@@ -23,8 +23,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Calendar, Clock, Edit, Trash2 } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, CornerDownRight, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { SubtaskList } from './SubtaskList'
 import { CommentSection } from './CommentSection'
 import { FileUpload } from './FileUpload'
 import { ActivityFeed } from './ActivityFeed'
@@ -41,6 +42,8 @@ import {
 
 interface TaskDetailProps {
   task: TaskWithAssignee
+  subtasks: TaskWithAssignee[]
+  parent: { id: string; title: string } | null
   comments: CommentWithUser[]
   attachments: AttachmentWithUser[]
   activities: ActivityWithUser[]
@@ -63,6 +66,8 @@ function formValuesFromTask(task: TaskWithAssignee): TaskFormValues {
 
 export function TaskDetail({
   task: initialTask,
+  subtasks: initialSubtasks,
+  parent,
   comments: initialComments,
   attachments: initialAttachments,
   activities: initialActivities,
@@ -71,17 +76,22 @@ export function TaskDetail({
 }: TaskDetailProps) {
   const {
     task,
+    subtasks,
     comments,
     attachments,
     activities,
     updateTask,
     deleteTask,
+    addSubtask,
+    updateSubtask,
+    removeSubtask,
     addComment,
     removeComment,
     addAttachment,
     removeAttachment,
   } = useTaskDetail({
     initialTask,
+    initialSubtasks,
     initialComments,
     initialAttachments,
     initialActivities,
@@ -201,8 +211,19 @@ export function TaskDetail({
     }
   }
 
+  const doneSubtasks = subtasks.filter((t) => t.status === 'completed').length
+
   return (
     <div className="space-y-6">
+      {parent && (
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground -mb-2">
+          <CornerDownRight className="size-3.5" />
+          Subtask of{' '}
+          <Link href={`/dashboard/tasks/${parent.id}`} className="text-primary hover:underline">
+            {parent.title}
+          </Link>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3">
         <Button asChild variant="ghost" size="icon">
@@ -260,8 +281,8 @@ export function TaskDetail({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete task?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      &ldquo;{task.title}&rdquo; and its comments, attachments, and activity will
-                      be permanently deleted.
+                      &ldquo;{task.title}&rdquo; and its subtasks, comments, attachments, and
+                      activity will be permanently deleted.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -355,6 +376,32 @@ export function TaskDetail({
               )}
             </CardContent>
           </Card>
+
+          {!task.parent_id && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Subtasks
+                  {subtasks.length > 0 && (
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                      {doneSubtasks}/{subtasks.length}
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SubtaskList
+                  parentId={task.id}
+                  subtasks={subtasks}
+                  profiles={profiles}
+                  currentUserId={currentUserId}
+                  onAdd={addSubtask}
+                  onUpdate={updateSubtask}
+                  onRemove={removeSubtask}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           <Tabs defaultValue="comments">
             <TabsList>

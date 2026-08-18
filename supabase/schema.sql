@@ -36,6 +36,7 @@ CREATE TABLE tasks (
   due_date DATE,
   assigned_to UUID REFERENCES profiles(id) ON DELETE SET NULL,
   created_by UUID REFERENCES profiles(id) ON DELETE SET NULL NOT NULL,
+  parent_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -80,6 +81,7 @@ CREATE INDEX idx_tasks_due_date ON tasks(due_date);
 CREATE INDEX idx_tasks_created_at ON tasks(created_at DESC);
 CREATE INDEX idx_tasks_updated_at ON tasks(updated_at DESC);
 CREATE INDEX idx_tasks_position ON tasks(position);
+CREATE INDEX idx_tasks_parent_id ON tasks(parent_id);
 CREATE INDEX idx_comments_task_id ON comments(task_id);
 CREATE INDEX idx_comments_task_created ON comments(task_id, created_at);
 CREATE INDEX idx_attachments_task_id ON attachments(task_id);

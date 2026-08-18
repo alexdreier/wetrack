@@ -46,6 +46,7 @@ type TasksContextValue = {
   hasActiveFilters: boolean
   statusCounts: Record<TaskStatus, number>
   priorityCounts: Record<Priority, number>
+  subtaskCounts: Map<string, { total: number; done: number }>
   updateTask: (id: string, patch: Partial<Task>) => Promise<boolean>
   reorderTask: (activeId: string, overId: string) => void
   removeTask: (id: string) => Promise<boolean>
@@ -220,6 +221,8 @@ export function TasksProvider({
   const filteredTasks = useMemo(() => {
     const search = deferredSearch.toLowerCase()
     const filtered = tasks.filter((task) => {
+      // Subtasks live on their parent's detail page, not in the main list
+      if (task.parent_id) return false
       if (
         search &&
         !task.title.toLowerCase().includes(search) &&
@@ -299,13 +302,25 @@ export function TasksProvider({
 
   const statusCounts = useMemo(() => {
     const counts = { not_started: 0, in_progress: 0, completed: 0 } as Record<TaskStatus, number>
-    for (const t of tasks) counts[t.status]++
+    for (const t of tasks) if (!t.parent_id) counts[t.status]++
     return counts
   }, [tasks])
 
   const priorityCounts = useMemo(() => {
     const counts = { urgent: 0, normal: 0, rainy_day: 0 } as Record<Priority, number>
-    for (const t of tasks) if (t.status !== 'completed') counts[t.priority]++
+    for (const t of tasks) if (!t.parent_id && t.status !== 'completed') counts[t.priority]++
+    return counts
+  }, [tasks])
+
+  const subtaskCounts = useMemo(() => {
+    const counts = new Map<string, { total: number; done: number }>()
+    for (const t of tasks) {
+      if (!t.parent_id) continue
+      const entry = counts.get(t.parent_id) || { total: 0, done: 0 }
+      entry.total++
+      if (t.status === 'completed') entry.done++
+      counts.set(t.parent_id, entry)
+    }
     return counts
   }, [tasks])
 
@@ -321,6 +336,7 @@ export function TasksProvider({
       hasActiveFilters,
       statusCounts,
       priorityCounts,
+      subtaskCounts,
       updateTask,
       reorderTask,
       removeTask,
@@ -337,6 +353,7 @@ export function TasksProvider({
       hasActiveFilters,
       statusCounts,
       priorityCounts,
+      subtaskCounts,
       updateTask,
       reorderTask,
       removeTask,
