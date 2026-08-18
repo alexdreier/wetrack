@@ -8,7 +8,6 @@ export type PriorityMeta = {
   label: string
   badgeClass: string
   dotClass: string
-  accentClass: string
   order: number
 }
 
@@ -26,7 +25,6 @@ export const PRIORITY_META: Record<Priority, PriorityMeta> = {
     label: 'Urgent',
     badgeClass: 'bg-urgent-muted text-urgent-foreground',
     dotClass: 'bg-urgent',
-    accentClass: 'bg-urgent',
     order: 0,
   },
   normal: {
@@ -34,7 +32,6 @@ export const PRIORITY_META: Record<Priority, PriorityMeta> = {
     label: 'Normal',
     badgeClass: 'bg-info-muted text-info-foreground',
     dotClass: 'bg-info',
-    accentClass: 'bg-info',
     order: 1,
   },
   rainy_day: {
@@ -42,7 +39,6 @@ export const PRIORITY_META: Record<Priority, PriorityMeta> = {
     label: 'Rainy Day',
     badgeClass: 'bg-muted text-muted-foreground',
     dotClass: 'bg-muted-foreground/50',
-    accentClass: 'bg-muted-foreground/40',
     order: 2,
   },
 }
