@@ -16,11 +16,12 @@ import { Task, TaskWithAssignee, Profile, TaskStatus, Priority } from '@/types/d
 import { PRIORITY_META } from '@/lib/task-meta'
 import { toast } from 'sonner'
 
-export type SortKey = 'updated' | 'created' | 'due_date' | 'lead' | 'priority'
+export type SortKey = 'manual' | 'updated' | 'created' | 'due_date' | 'lead' | 'priority'
 
 export type TaskFiltersState = {
   search: string
-  status: 'all' | TaskStatus
+  // 'open' = everything not completed (the default, matching task-app norms)
+  status: 'open' | 'all' | TaskStatus
   priority: 'all' | Priority
   assignee: 'all' | 'mine' | 'unassigned'
   sort: SortKey
@@ -28,10 +29,10 @@ export type TaskFiltersState = {
 
 const DEFAULT_FILTERS: TaskFiltersState = {
   search: '',
-  status: 'all',
+  status: 'open',
   priority: 'all',
   assignee: 'all',
-  sort: 'updated',
+  sort: 'manual',
 }
 
 type TasksContextValue = {
@@ -46,6 +47,7 @@ type TasksContextValue = {
   statusCounts: Record<TaskStatus, number>
   priorityCounts: Record<Priority, number>
   updateTask: (id: string, patch: Partial<Task>) => Promise<boolean>
+  reorderTask: (activeId: string, overId: string) => void
   removeTask: (id: string) => Promise<boolean>
   addTask: (task: Task) => void
 }
@@ -161,7 +163,7 @@ export function TasksProvider({
 
   const hasActiveFilters =
     filters.search !== '' ||
-    filters.status !== 'all' ||
+    filters.status !== DEFAULT_FILTERS.status ||
     filters.priority !== 'all' ||
     filters.assignee !== 'all'
 
@@ -225,7 +227,9 @@ export function TasksProvider({
       ) {
         return false
       }
-      if (filters.status !== 'all' && task.status !== filters.status) return false
+      if (filters.status === 'open' && task.status === 'completed') return false
+      if (filters.status !== 'open' && filters.status !== 'all' && task.status !== filters.status)
+        return false
       if (filters.priority !== 'all' && task.priority !== filters.priority) return false
       if (filters.assignee === 'mine' && task.assigned_to !== currentUserId) return false
       if (filters.assignee === 'unassigned' && task.assigned_to !== null) return false
@@ -234,6 +238,12 @@ export function TasksProvider({
 
     return filtered.sort((a, b) => {
       switch (filters.sort) {
+        case 'manual': {
+          const ap = a.position ?? Number.MAX_SAFE_INTEGER
+          const bp = b.position ?? Number.MAX_SAFE_INTEGER
+          if (ap !== bp) return ap - bp
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        }
         case 'updated':
           return (
             new Date(b.updated_at || b.created_at).getTime() -
@@ -258,6 +268,34 @@ export function TasksProvider({
       }
     })
   }, [tasks, deferredSearch, filters.status, filters.priority, filters.assignee, filters.sort, currentUserId])
+
+  // Drop the active task next to `over` in the visible order; fractional
+  // positions mean one row update, no reindexing of neighbors.
+  const reorderTask = useCallback(
+    (activeId: string, overId: string) => {
+      const ordered = filteredTasks
+      const oldIndex = ordered.findIndex((t) => t.id === activeId)
+      const newIndex = ordered.findIndex((t) => t.id === overId)
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+      // Matches dnd-kit's arrayMove: the dragged task lands at newIndex
+      const without = ordered.filter((t) => t.id !== activeId)
+      const prev = without[newIndex - 1]
+      const next = without[newIndex]
+      const posOf = (t: TaskWithAssignee | undefined) => t?.position ?? null
+
+      let newPos: number
+      const prevPos = posOf(prev)
+      const nextPos = posOf(next)
+      if (prevPos !== null && nextPos !== null) newPos = (prevPos + nextPos) / 2
+      else if (prevPos !== null) newPos = prevPos + 1024
+      else if (nextPos !== null) newPos = nextPos - 1024
+      else newPos = 0
+
+      updateTask(activeId, { position: newPos })
+    },
+    [filteredTasks, updateTask]
+  )
 
   const statusCounts = useMemo(() => {
     const counts = { not_started: 0, in_progress: 0, completed: 0 } as Record<TaskStatus, number>
@@ -284,6 +322,7 @@ export function TasksProvider({
       statusCounts,
       priorityCounts,
       updateTask,
+      reorderTask,
       removeTask,
       addTask,
     }),
@@ -299,6 +338,7 @@ export function TasksProvider({
       statusCounts,
       priorityCounts,
       updateTask,
+      reorderTask,
       removeTask,
       addTask,
     ]

@@ -15,6 +15,7 @@ import { useTasks, TaskFiltersState, SortKey } from './TasksProvider'
 import { PRIORITIES, STATUSES } from '@/lib/task-meta'
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'manual', label: 'My order' },
   { value: 'updated', label: 'Last updated' },
   { value: 'created', label: 'Newest' },
   { value: 'due_date', label: 'Due date' },
@@ -75,12 +76,15 @@ export function TaskFilters() {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All statuses</SelectItem>
+          <SelectItem value="open">
+            Open ({statusCounts.not_started + statusCounts.in_progress})
+          </SelectItem>
           {STATUSES.map((s) => (
             <SelectItem key={s.value} value={s.value}>
               {s.label} ({statusCounts[s.value]})
             </SelectItem>
           ))}
+          <SelectItem value="all">All statuses</SelectItem>
         </SelectContent>
       </Select>
 
