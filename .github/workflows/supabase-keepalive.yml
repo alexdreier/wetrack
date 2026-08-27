@@ -1,11 +1,16 @@
 name: Supabase Keep-Alive
 
-# Free-tier Supabase projects pause after ~7 days without database activity.
-# This workflow runs a real query daily so the project never goes inactive.
+# Free-tier Supabase projects pause after 7 days without "sufficient activity".
+#
+# The previous version of this workflow ran a daily one-row anon SELECT and
+# reported success every single day. On 2026-08-27 Supabase still scheduled
+# WETrack for pausing, which means those reads never counted. A green check that
+# proves nothing is worse than no check, so this version WRITES and then
+# verifies the write actually landed.
 
 on:
   schedule:
-    - cron: "17 9 * * *" # daily at 09:17 UTC
+    - cron: "17 */6 * * *" # every 6 hours
   workflow_dispatch:
 
 permissions:
@@ -15,36 +20,50 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping WeTrack Supabase (counts as database activity)
+      - name: Beat the WETrack heartbeat (a real write, then verified)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" \
-            "$SUPABASE_URL/rest/v1/tasks?select=id&limit=1" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-          echo "Supabase responded with HTTP $code"
-          # 200 = query ran; anything else means the project is paused or misconfigured
-          [ "$code" = "200" ]
+          set -euo pipefail
+          before=$(curl -sS -X POST "$SUPABASE_URL/rest/v1/rpc/beat" \
+            -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY" \
+            -H "Content-Type: application/json" -d '{}')
+          echo "first beat:  $before"
+          b1=$(echo "$before" | python3 -c 'import sys,json; print(json.load(sys.stdin)["beats"])')
 
-      - name: Ping boardsync-db Supabase
+          second=$(curl -sS -X POST "$SUPABASE_URL/rest/v1/rpc/beat" \
+            -H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY" \
+            -H "Content-Type: application/json" -d '{}')
+          echo "second beat: $second"
+          b2=$(echo "$second" | python3 -c 'import sys,json; print(json.load(sys.stdin)["beats"])')
+
+          # The counter MUST advance. A 2xx alone is exactly the false assurance
+          # that let this sit broken for weeks.
+          if [ "$b2" -le "$b1" ]; then
+            echo "::error::heartbeat did not advance ($b1 -> $b2); the write is not landing"
+            exit 1
+          fi
+          echo "heartbeat advanced $b1 -> $b2"
+
+      - name: Ping boardsync-db
         env:
           SUPABASE_URL: ${{ secrets.BOARDSYNC_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.BOARDSYNC_SUPABASE_ANON_KEY }}
         run: |
+          # NOTE: still a read-only ping, i.e. the same approach that demonstrably
+          # failed for WETrack. This project needs the same keepalive table and
+          # beat() function before it can be considered protected.
           code=$(curl -s -o /dev/null -w "%{http_code}" \
             "$SUPABASE_URL/rest/v1/Account?select=id&limit=1" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-          echo "Supabase responded with HTTP $code"
+            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "boardsync-db responded with HTTP $code (read-only ping; NOT proof of sufficient activity)"
           [ "$code" = "200" ]
 
       - name: Checkout
         uses: actions/checkout@v4
 
       # GitHub disables scheduled workflows after 60 days without repo activity.
-      # If the last commit is >50 days old, push an empty commit to stay active.
       - name: Keep workflow schedule alive
         run: |
           last=$(git log -1 --format=%ct)
