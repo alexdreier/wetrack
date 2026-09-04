@@ -46,20 +46,6 @@ jobs:
           fi
           echo "heartbeat advanced $b1 -> $b2"
 
-      - name: Ping boardsync-db
-        env:
-          SUPABASE_URL: ${{ secrets.BOARDSYNC_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.BOARDSYNC_SUPABASE_ANON_KEY }}
-        run: |
-          # NOTE: still a read-only ping, i.e. the same approach that demonstrably
-          # failed for WETrack. This project needs the same keepalive table and
-          # beat() function before it can be considered protected.
-          code=$(curl -s -o /dev/null -w "%{http_code}" \
-            "$SUPABASE_URL/rest/v1/Account?select=id&limit=1" \
-            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-          echo "boardsync-db responded with HTTP $code (read-only ping; NOT proof of sufficient activity)"
-          [ "$code" = "200" ]
-
       - name: Checkout
         uses: actions/checkout@v4
 
